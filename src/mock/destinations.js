@@ -16,7 +16,7 @@ const pictureDescriptions = [
   '{name} Brandenburg Gate',
 ];
 
-const MAX_PICTURES = 8;
+const MAX_PICTURES = 10;
 
 let destinations;
 
@@ -29,7 +29,7 @@ function getDestinations() {
       pictures: Array.from({ length: getRandomNumber(0, MAX_PICTURES) }, () => ({
         src: `https://loremflickr.com/248/152?random=${getRandomNumber(0, 5000)}`,
         description: getRandomArrayElement(pictureDescriptions).replace('{name}', name),
-      }) ),
+      })),
     }));
   }
   return destinations;
