@@ -138,26 +138,32 @@ function createTemplate(point, types, offersByType, destinations) {
 
 
 export default class PointFormView {
+  #element;
+  #point;
+  #types;
+  #offersByType;
+  #destinations;
+
   constructor({ point, types, offersByType, destinations }) {
-    this.point = point || getBlankPoint(destinations);
-    this.types = types;
-    this.offersByType = offersByType;
-    this.destinations = destinations;
+    this.#point = point || getBlankPoint(destinations);
+    this.#types = types;
+    this.#offersByType = offersByType;
+    this.#destinations = destinations;
   }
 
-  getTemplate() {
-    return createTemplate(this.point, this.types, this.offersByType, this.destinations);
+  get template() {
+    return createTemplate(this.#point, this.#types, this.#offersByType, this.#destinations);
   }
 
-  getElement() {
-    if (!this.element) {
-      this.element = createElement(this.getTemplate());
+  get element() {
+    if (!this.#element) {
+      this.#element = createElement(this.template);
     }
 
-    return this.element;
+    return this.#element;
   }
 
   removeElement() {
-    this.element = null;
+    this.#element = null;
   }
 }

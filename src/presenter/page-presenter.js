@@ -12,36 +12,36 @@ const headerElement = document.querySelector('.trip-main');
 const listParentElement = document.querySelector('.trip-events');
 
 export default class PagePresenter {
-  model = new PageModel();
+  #model = new PageModel();
 
-  filterComponent = new FilterView();
-  newPointButtonComponent = new NewPointButtonView();
-  sortComponent = new SortView();
-  listComponent = new PointsListView();
-  messageComponent = new MessageView();
+  #filterComponent = new FilterView();
+  #newPointButtonComponent = new NewPointButtonView();
+  #sortComponent = new SortView();
+  #listComponent = new PointsListView();
+  #messageComponent = new MessageView();
 
   init() {
-    render(this.filterComponent, headerElement);
-    render(this.newPointButtonComponent, headerElement);
-    render(this.sortComponent, listParentElement);
-    render(this.listComponent, listParentElement);
+    render(this.#filterComponent, headerElement);
+    render(this.#newPointButtonComponent, headerElement);
+    render(this.#sortComponent, listParentElement);
+    render(this.#listComponent, listParentElement);
 
-    const points = this.model.getPoints();
+    const points = this.#model.points;
     // WIP, по требования ДЗ - первый эемент списка - форма редактирования, потом обычные пойнты
     points.forEach((point, index) => {
       if (index === 0) {
         render(new PointFormView({
           point: points[0],
-          types: this.model.getTypes(),
-          offersByType: this.model.getOffersByType(),
-          destinations: this.model.getDestinations(),
-        }), this.listComponent.getElement());
+          types: this.#model.types,
+          offersByType: this.#model.offersByType,
+          destinations: this.#model.destinations,
+        }), this.#listComponent.element);
       } else {
         render(new PointView({
           point: points[index],
-          offersByType: this.model.getOffersByType(),
-          destinations: this.model.getDestinations(),
-        }), this.listComponent.getElement());
+          offersByType: this.#model.offersByType,
+          destinations: this.#model.destinations,
+        }), this.#listComponent.element);
       }
     });
   }
