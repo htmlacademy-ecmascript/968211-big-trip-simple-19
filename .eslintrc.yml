@@ -7,3 +7,20 @@ env:
   browser: true
 
 extends: 'htmlacademy/vanilla'
+
+rules:
+  comma-dangle:
+    - error
+    - always-multiline
+  comma-spacing:
+    - error
+    - { before: false, after: true }
+  object-curly-spacing:
+    - error
+    - always
+  key-spacing:
+    - error
+    - { beforeColon: false }
+  space-in-parens:
+    - error
+    - never
