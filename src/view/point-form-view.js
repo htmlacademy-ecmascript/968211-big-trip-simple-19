@@ -1,5 +1,6 @@
-import dayjs from 'dayjs';
 import { createElement } from '../render.js';
+import { formatDateTime } from '../utils.js';
+import { DateFormat, getBlankPoint } from '../const.js';
 
 function getEventTypeListTemplate(currentType, possibleTypes) {
   return `<div class="event__type-list">
@@ -15,7 +16,7 @@ function getEventTypeListTemplate(currentType, possibleTypes) {
 }
 
 
-function getOffersTemplate({ possibleOffers, selectedOffers }) {
+function getOffersTemplate({ selectedOfferIds, possibleOffers }) {
   if (!possibleOffers?.length) {
     return '';
   }
@@ -23,7 +24,7 @@ function getOffersTemplate({ possibleOffers, selectedOffers }) {
   const getSingleOfferTemplate = (offer) => {
     const offerName = offer.title.toLowerCase().replaceAll(' ', '-');
     const offerId = `${offerName}-1`;
-    const checked = selectedOffers.find((selectedOffer) => selectedOffer.id === offer.id) ? 'checked' : '';
+    const checked = selectedOfferIds.includes(offer.id) ? 'checked' : '';
     return `<div class="event__offer-selector">
               <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerId}" type="checkbox" name="event-offer-${offerName}" ${checked}>
               <label class="event__offer-label" for="event-offer-${offerId}">
@@ -42,41 +43,45 @@ function getOffersTemplate({ possibleOffers, selectedOffers }) {
           </section>`;
 }
 
-function getDestinationTemplate(destination) {
+function getDestinationTemplate(id, destinations) {
+  const destination = destinations.find((dest) => dest.id === id);
+
   if (!destination) {
     return '';
   }
 
   const { description, pictures } = destination;
 
-  const getPicturesTemplate = ()=> {
-    if (!pictures.length) {
-      return '';
-    }
-    return `<div class="event__photos-container">
-              <div class="event__photos-tape">
-                ${pictures.map((picture) => `<img class="event__photo" src="${picture.src}" alt="${picture.description}">`).join('')}
-              </div>
-            </div>`;
-  };
+  const getDescriptionTemplate = () => description
+    ? `<p class="event__destination-description">${description}</p>`
+    : '';
+
+  const getPicturesTemplate = () => pictures.length
+    ? `<div class="event__photos-container">
+         <div class="event__photos-tape">
+           ${pictures.map((picture) => `<img class="event__photo" src="${picture.src}" alt="${picture.description}">`).join('')}
+         </div>
+       </div>`
+    : '';
 
   return `<section class="event__section  event__section--destination">
             <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-            <p class="event__destination-description">${description}</p>
+            ${getDescriptionTemplate()}
             ${getPicturesTemplate()}
           </section>`;
 }
 
 
-function createTemplate(point, possibleTypes, possibleDestinations, offersByType) {
-  const eventTypeListTemplate = getEventTypeListTemplate(point.type, possibleTypes);
-  const startTime = dayjs(point.dateFrom).format('DD/MM/YY HH:mm');
-  const endTime = dayjs(point.dateTo).format('DD/MM/YY HH:mm');
+function createTemplate(point, types, offersByType, destinations) {
+  const eventTypeListTemplate = getEventTypeListTemplate(point.type, types);
+  const { name: destinationName } = destinations.find((dest) => dest.id === point.destination);
+  const startTime = formatDateTime(point.dateFrom, DateFormat.POINT_FORM_TIME);
+  const endTime = formatDateTime(point.dateTo, DateFormat.POINT_FORM_TIME);
   const offersTemplate = getOffersTemplate({
+    selectedOfferIds: point.offers,
     possibleOffers: offersByType[point.type],
-    selectedOffers: point.offers,
   });
-  const destinationTemplate = getDestinationTemplate(point.destination);
+  const destinationTemplate = getDestinationTemplate(point.destination, destinations);
   const isEditForm = (point.id !== null);
 
   return `<li class="trip-events__item">
@@ -95,9 +100,9 @@ function createTemplate(point, possibleTypes, possibleDestinations, offersByType
                   <label class="event__label  event__type-output" for="event-destination-1">
                     ${point.type}
                   </label>
-                  <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${point.destination.name}" list="destination-list-1">
+                  <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${destinationName}" list="destination-list-1">
                   <datalist id="destination-list-1">
-                    ${possibleDestinations.map((dest) => `<option value="${dest.name}"></option>`).join('')}
+                    ${destinations.map((dest) => `<option value="${dest.name}"></option>`).join('')}
                   </datalist>
                 </div>
 
@@ -133,23 +138,15 @@ function createTemplate(point, possibleTypes, possibleDestinations, offersByType
 
 
 export default class PointFormView {
-  constructor({ point, possibleTypes, possibleDestinations, offersByType }) {
-    this.point = point || {
-      id: null,
-      type: possibleTypes[0],
-      destination: possibleDestinations[0],
-      dateFrom: new Date(Date.now()),
-      dateTo: new Date(Date.now() + 1000 * 60 * 60 * 24),
-      price: null,
-      offers: [],
-    };
-    this.possibleTypes = possibleTypes;
-    this.possibleDestinations = possibleDestinations;
+  constructor({ point, types, offersByType, destinations }) {
+    this.point = point || getBlankPoint(destinations);
+    this.types = types;
     this.offersByType = offersByType;
+    this.destinations = destinations;
   }
 
   getTemplate() {
-    return createTemplate(this.point, this.possibleTypes, this.possibleDestinations, this.offersByType);
+    return createTemplate(this.point, this.types, this.offersByType, this.destinations);
   }
 
   getElement() {

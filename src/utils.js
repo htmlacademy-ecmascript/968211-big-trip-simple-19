@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 function getRandomArrayElement(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
@@ -10,4 +12,8 @@ function getRandomNumber(min, max) {
   return Math.round(Math.random() * (max - min) + min);
 }
 
-export { getRandomArrayElement, getRandomArrayElements, getRandomNumber };
+function formatDateTime(datetime, formatTemplate) {
+  return dayjs(datetime).format(formatTemplate);
+}
+
+export { getRandomArrayElement, getRandomArrayElements, getRandomNumber, formatDateTime };
