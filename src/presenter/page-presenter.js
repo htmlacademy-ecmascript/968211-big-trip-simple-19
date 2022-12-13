@@ -12,37 +12,71 @@ const headerElement = document.querySelector('.trip-main');
 const listParentElement = document.querySelector('.trip-events');
 
 export default class PagePresenter {
-  model = new PageModel();
+  #model = new PageModel();
 
-  filterComponent = new FilterView();
-  newPointButtonComponent = new NewPointButtonView();
-  sortComponent = new SortView();
-  listComponent = new PointsListView();
-  messageComponent = new MessageView();
+  #filterComponent = new FilterView();
+  #newPointButtonComponent = new NewPointButtonView();
+  #sortComponent = new SortView();
+  #listComponent = new PointsListView();
+  #messageComponent = new MessageView();
 
   init() {
-    render(this.filterComponent, headerElement);
-    render(this.newPointButtonComponent, headerElement);
-    render(this.sortComponent, listParentElement);
-    render(this.listComponent, listParentElement);
+    render(this.#filterComponent, headerElement);
+    render(this.#newPointButtonComponent, headerElement);
+    render(this.#sortComponent, listParentElement);
+    render(this.#listComponent, listParentElement);
 
-    const points = this.model.getPoints();
-    // WIP, по требования ДЗ - первый эемент списка - форма редактирования, потом обычные пойнты
-    points.forEach((point, index) => {
-      if (index === 0) {
-        render(new PointFormView({
-          point: points[0],
-          types: this.model.getTypes(),
-          offersByType: this.model.getOffersByType(),
-          destinations: this.model.getDestinations(),
-        }), this.listComponent.getElement());
-      } else {
-        render(new PointView({
-          point: points[index],
-          offersByType: this.model.getOffersByType(),
-          destinations: this.model.getDestinations(),
-        }), this.listComponent.getElement());
-      }
+    const points = this.#model.points;
+    points.forEach((point) => this.#renderPoint(point));
+  }
+
+  #renderPoint(point) {
+    const pointComponent = new PointView({
+      point,
+      offersByType: this.#model.offersByType,
+      destinations: this.#model.destinations,
     });
+
+    const pointEditComponent = new PointFormView({
+      point,
+      types: this.#model.types,
+      offersByType: this.#model.offersByType,
+      destinations: this.#model.destinations,
+    });
+
+
+    const replacePointToForm = () => {
+      this.#listComponent.element.replaceChild(pointEditComponent.element, pointComponent.element);
+    };
+
+    const replaceFormToPoint = () => {
+      this.#listComponent.element.replaceChild(pointComponent.element, pointEditComponent.element);
+    };
+
+    const escDownHandler = (evt) => {
+      if (evt.key === 'Escape' || evt.key === 'Esc') {
+        evt.preventDefault();
+        replaceFormToPoint();
+        document.removeEventListener('keydown', escDownHandler);
+      }
+    };
+
+    pointComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+      replacePointToForm();
+      document.addEventListener('keydown', escDownHandler);
+    });
+
+    pointEditComponent.element.querySelector('form').addEventListener('submit', (evt) => {
+      evt.preventDefault();
+      replaceFormToPoint();
+      document.removeEventListener('keydown', escDownHandler);
+    });
+
+    pointEditComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+      replaceFormToPoint();
+      document.removeEventListener('keydown', escDownHandler);
+    });
+
+    render(pointComponent, this.#listComponent.element);
   }
 }

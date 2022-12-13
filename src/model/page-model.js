@@ -4,9 +4,9 @@ import { TYPES } from '../const.js';
 const POINTS_AMOUNT = 10;
 
 export default class PageModel {
-  types = TYPES;
+  #types = TYPES;
 
-  points = mock.getPoints(POINTS_AMOUNT).map((point) => ({
+  #points = mock.getPoints(POINTS_AMOUNT).map((point) => ({
     id: point.id,
     type: point.type,
     destination: point.destination,
@@ -16,23 +16,23 @@ export default class PageModel {
     offers: point.offers,
   }));
 
-  offersByType = Object.fromEntries(mock.getOffersByType().map(({ type, offers }) => [type, offers]));
-  destinations = mock.getDestinations();
+  #offersByType = Object.fromEntries(mock.getOffersByType().map(({ type, offers }) => [type, offers]));
+  #destinations = mock.getDestinations();
 
 
-  getTypes() {
-    return structuredClone(this.types);
+  get types() {
+    return structuredClone(this.#types);
   }
 
-  getPoints() {
-    return structuredClone(this.points);
+  get points() {
+    return structuredClone(this.#points);
   }
 
-  getOffersByType() {
-    return structuredClone(this.offersByType);
+  get offersByType() {
+    return structuredClone(this.#offersByType);
   }
 
-  getDestinations() {
-    return structuredClone(this.destinations);
+  get destinations() {
+    return structuredClone(this.#destinations);
   }
 }
