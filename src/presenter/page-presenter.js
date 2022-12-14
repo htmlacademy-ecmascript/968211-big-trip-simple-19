@@ -7,6 +7,7 @@ import PointView from '../view/point-view.js';
 import PointFormView from '../view/point-form-view.js';
 import MessageView from '../view/message-view.js';
 import PointsListView from '../view/point-list-view.js';
+import { FilterValue, FilterValueToEmptyMessage } from '../const.js';
 
 const headerElement = document.querySelector('.trip-main');
 const listParentElement = document.querySelector('.trip-events');
@@ -18,16 +19,24 @@ export default class PagePresenter {
   #newPointButtonComponent = new NewPointButtonView();
   #sortComponent = new SortView();
   #listComponent = new PointsListView();
-  #messageComponent = new MessageView();
+  #messageComponent;
 
   init() {
     render(this.#filterComponent, headerElement);
     render(this.#newPointButtonComponent, headerElement);
-    render(this.#sortComponent, listParentElement);
-    render(this.#listComponent, listParentElement);
 
     const points = this.#model.points;
-    points.forEach((point) => this.#renderPoint(point));
+
+    if (points.length) {
+      render(this.#sortComponent, listParentElement);
+      render(this.#listComponent, listParentElement);
+      points.forEach((point) => this.#renderPoint(point));
+    } else {
+      this.#messageComponent = new MessageView({
+        message: FilterValueToEmptyMessage[FilterValue.EVERTHING],
+      });
+      render(this.#messageComponent, listParentElement);
+    }
   }
 
   #renderPoint(point) {
