@@ -27,7 +27,7 @@ export default class UiBlocker {
    * @param {number} config.lowerLimit Время до блокировки интерфейса в миллисекундах. Если вызвать метод unblock раньше, то интерфейс заблокирован не будет
    * @param {number} config.upperLimit Минимальное время блокировки в миллисекундах. Минимальная длительность блокировки
    */
-  constructor({lowerLimit, upperLimit}) {
+  constructor({ lowerLimit, upperLimit }) {
     this.#lowerLimit = lowerLimit;
     this.#upperLimit = upperLimit;
 
