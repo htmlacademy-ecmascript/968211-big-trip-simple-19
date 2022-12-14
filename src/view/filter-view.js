@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 function createTemplate() {
   return `
@@ -22,22 +22,8 @@ function createTemplate() {
           </div>`;
 }
 
-export default class FilterView {
-  #element;
-
+export default class FilterView extends AbstractStatefulView {
   get template() {
     return createTemplate();
-  }
-
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
-  }
-
-  removeElement() {
-    this.#element = null;
   }
 }

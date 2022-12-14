@@ -1,6 +1,6 @@
-import { createElement } from '../render.js';
 import { DateFormat } from '../const.js';
 import { formatDateTime } from '../utils.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 
 function createSelectedOffersTemplate({ selectedOfferIds, allOffers }) {
@@ -60,13 +60,13 @@ function createTemplate(point, offersByType, destinations) {
           </li>`;
 }
 
-export default class PointView {
-  #element;
+export default class PointView extends AbstractStatefulView {
   #point;
   #offersByType;
   #destinations;
 
   constructor({ point, offersByType, destinations }) {
+    super();
     this.#point = point;
     this.#offersByType = offersByType;
     this.#destinations = destinations;
@@ -76,15 +76,13 @@ export default class PointView {
     return createTemplate(this.#point, this.#offersByType, this.#destinations);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
+  setRollUpButtonClickHandler(callback) {
+    this._callback.rollUpButtonClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
   }
 
-  removeElement() {
-    this.#element = null;
-  }
+  #rollUpButtonClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.rollUpButtonClick();
+  };
 }
