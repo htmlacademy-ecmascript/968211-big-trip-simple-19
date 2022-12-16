@@ -70,19 +70,18 @@ export default class PagePresenter {
       }
     };
 
-    pointComponent.setRollUpButtonClickHandler(replacePointToForm);
-    pointComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+    pointComponent.setRollUpButtonClickHandler(() => {
+      replacePointToForm();
       document.addEventListener('keydown', escDownHandler);
     });
 
-    pointEditComponent.setFormSubmitHandler(replaceFormToPoint);
-    pointEditComponent.element.querySelector('form').addEventListener('submit', (evt) => {
-      evt.preventDefault();
+    pointEditComponent.setFormSubmitHandler(() => {
+      replaceFormToPoint();
       document.removeEventListener('keydown', escDownHandler);
     });
 
-    pointEditComponent.setRollUpButtonClickHandler(replaceFormToPoint);
-    pointEditComponent.element.querySelector('.event__rollup-btn').addEventListener('click', () => {
+    pointEditComponent.setRollUpButtonClickHandler(() => {
+      replaceFormToPoint();
       document.removeEventListener('keydown', escDownHandler);
     });
 
