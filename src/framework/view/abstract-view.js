@@ -1,4 +1,4 @@
-import { createElement } from '../render.js';
+// import { createElement, remove, render, replace } from '../render.js';
 import './abstract-view.css';
 
 /** @const {string} Класс, реализующий эффект "покачивания головой" */
@@ -29,7 +29,7 @@ export default class AbstractView {
    */
   get element() {
     if (!this.#element) {
-      this.#element = createElement(this.template);
+      this.#element = this.constructor.createElement(this.template);
     }
 
     return this.#element;
@@ -59,6 +59,75 @@ export default class AbstractView {
       this.element.classList.remove(SHAKE_CLASS_NAME);
       callback?.();
     }, SHAKE_ANIMATION_TIMEOUT);
+  }
+
+  renderInto(container) {
+    this.constructor.render(this, container, this.constructor.RenderPosition.BEFOREEND);
+  }
+
+  replaceWith(newComponent) {
+    this.constructor.replace(newComponent, this);
+  }
+
+  remove() {
+    this.constructor.remove(this);
+  }
+
+  // Перенесено из render.js
+  static RenderPosition = {
+    BEFOREBEGIN: 'beforebegin',
+    AFTERBEGIN: 'afterbegin',
+    BEFOREEND: 'beforeend',
+    AFTEREND: 'afterend',
+  };
+
+  static render(component, container, place = this.RenderPosition.BEFOREEND) {
+    if (!(component instanceof AbstractView)) {
+      throw new Error('Can render only components');
+    }
+
+    if (container === null) {
+      throw new Error('Container element doesn\'t exist');
+    }
+
+    container.insertAdjacentElement(place, component.element);
+  }
+
+  static replace(newComponent, oldComponent) {
+    if (!(newComponent instanceof AbstractView && oldComponent instanceof AbstractView)) {
+      throw new Error('Can replace only components');
+    }
+
+    const newElement = newComponent.element;
+    const oldElement = oldComponent.element;
+
+    const parent = oldElement.parentElement;
+
+    if (parent === null) {
+      throw new Error('Parent element doesn\'t exist');
+    }
+
+    parent.replaceChild(newElement, oldElement);
+  }
+
+  static remove(component) {
+    if (component === null) {
+      return;
+    }
+
+    if (!(component instanceof AbstractView)) {
+      throw new Error('Can remove only components');
+    }
+
+    component.element.remove();
+    component.removeElement();
+  }
+
+  static createElement(template) {
+    const newElement = document.createElement('div');
+    newElement.innerHTML = template;
+
+    return newElement.firstElementChild;
   }
 }
 

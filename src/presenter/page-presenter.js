@@ -1,5 +1,4 @@
 import PageModel from '../model/page-model.js';
-import { render } from '../render.js';
 import FilterView from '../view/filter-view.js';
 import NewPointButtonView from '../view/new-point-button-view.js';
 import SortView from '../view/sort-view.js';
@@ -22,20 +21,20 @@ export default class PagePresenter {
   #messageComponent;
 
   init() {
-    render(this.#filterComponent, headerElement);
-    render(this.#newPointButtonComponent, headerElement);
+    this.#filterComponent.renderInto(headerElement);
+    this.#newPointButtonComponent.renderInto(headerElement);
 
     const points = this.#model.points;
 
     if (points.length) {
-      render(this.#sortComponent, listParentElement);
-      render(this.#listComponent, listParentElement);
+      this.#sortComponent.renderInto(listParentElement);
+      this.#listComponent.renderInto(listParentElement);
       points.forEach((point) => this.#renderPoint(point));
     } else {
       this.#messageComponent = new MessageView({
         message: FilterValueToEmptyMessage[FilterValue.EVERTHING],
       });
-      render(this.#messageComponent, listParentElement);
+      this.#messageComponent.renderInto(listParentElement);
     }
   }
 
@@ -54,37 +53,29 @@ export default class PagePresenter {
     });
 
 
-    const replacePointToForm = () => {
-      this.#listComponent.element.replaceChild(pointEditComponent.element, pointComponent.element);
-    };
-
-    const replaceFormToPoint = () => {
-      this.#listComponent.element.replaceChild(pointComponent.element, pointEditComponent.element);
-    };
-
     const escDownHandler = (evt) => {
       if (evt.key === 'Escape' || evt.key === 'Esc') {
         evt.preventDefault();
-        replaceFormToPoint();
+        pointEditComponent.replaceWith(pointComponent);
         document.removeEventListener('keydown', escDownHandler);
       }
     };
 
     pointComponent.setRollUpButtonClickHandler(() => {
-      replacePointToForm();
+      pointComponent.replaceWith(pointEditComponent);
       document.addEventListener('keydown', escDownHandler);
     });
 
     pointEditComponent.setFormSubmitHandler(() => {
-      replaceFormToPoint();
+      pointEditComponent.replaceWith(pointComponent);
       document.removeEventListener('keydown', escDownHandler);
     });
 
     pointEditComponent.setRollUpButtonClickHandler(() => {
-      replaceFormToPoint();
+      pointEditComponent.replaceWith(pointComponent);
       document.removeEventListener('keydown', escDownHandler);
     });
 
-    render(pointComponent, this.#listComponent.element);
+    pointComponent.renderInto(this.#listComponent.element);
   }
 }
