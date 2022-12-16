@@ -14,17 +14,18 @@ const listParentElement = document.querySelector('.trip-events');
 export default class PagePresenter {
   #model = new PageModel();
 
-  #filterComponent = new FilterView();
+  #filterComponent;
   #newPointButtonComponent = new NewPointButtonView();
   #sortComponent = new SortView();
   #listComponent = new PointsListView();
   #messageComponent;
 
   init() {
+    const points = this.#model.points;
+
+    this.#filterComponent = new FilterView({ points });
     this.#filterComponent.renderInto(headerElement);
     this.#newPointButtonComponent.renderInto(headerElement);
-
-    const points = this.#model.points;
 
     if (points.length) {
       this.#sortComponent.renderInto(listParentElement);

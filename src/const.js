@@ -19,14 +19,14 @@ const getBlankPoint = (destinations) => ({
 });
 
 const FilterValue = {
-  EVERTHING: 'Everthing',
-  PAST: 'Past',
-  FUTURE: 'Future',
+  EVERTHING: 'everthing',
+  FUTURE: 'future',
 };
+
+const DefaultFilterValue = FilterValue.EVERTHING;
 
 const FilterValueToEmptyMessage = {
   [FilterValue.EVERTHING]: 'Click New Event to create your first point',
-  [FilterValue.PAST]: 'There are no past events now',
   [FilterValue.FUTURE]: 'There are no future events now',
 };
 
@@ -35,5 +35,6 @@ export {
   DateFormat,
   getBlankPoint,
   FilterValue,
+  DefaultFilterValue,
   FilterValueToEmptyMessage,
 };
