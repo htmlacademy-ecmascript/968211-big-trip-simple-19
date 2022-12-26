@@ -64,25 +64,24 @@ export default class PointView extends AbstractStatefulView {
   #point;
   #offersByType;
   #destinations;
+  #handleRollUpButtonClick;
 
-  constructor({ point, offersByType, destinations }) {
+  constructor({ point, offersByType, destinations, onRollUpButtonClick }) {
     super();
     this.#point = point;
     this.#offersByType = offersByType;
     this.#destinations = destinations;
+
+    this.#handleRollUpButtonClick = onRollUpButtonClick;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
   }
 
   get template() {
     return createTemplate(this.#point, this.#offersByType, this.#destinations);
   }
 
-  setRollUpButtonClickHandler(callback) {
-    this._callback.rollUpButtonClick = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
-  }
-
   #rollUpButtonClickHandler = (evt) => {
     evt.preventDefault();
-    this._callback.rollUpButtonClick();
+    this.#handleRollUpButtonClick();
   };
 }

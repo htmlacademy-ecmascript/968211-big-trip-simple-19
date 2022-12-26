@@ -40,42 +40,40 @@ export default class PagePresenter {
   }
 
   #renderPoint(point) {
+    let pointEditComponent = null;
+
     const pointComponent = new PointView({
       point,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
+      onRollUpButtonClick: () => {
+        pointComponent.replaceWith(pointEditComponent);
+        document.addEventListener('keydown', escDownHandler);
+      },
     });
 
-    const pointEditComponent = new PointFormView({
+    pointEditComponent = new PointFormView({
       point,
       types: this.#model.types,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
+      onFormSubmit: () => {
+        pointEditComponent.replaceWith(pointComponent);
+        document.removeEventListener('keydown', escDownHandler);
+      },
+      onRollUpButtonClick: () => {
+        pointEditComponent.replaceWith(pointComponent);
+        document.removeEventListener('keydown', escDownHandler);
+      },
     });
 
-
-    const escDownHandler = (evt) => {
+    function escDownHandler (evt) {
       if (evt.key === 'Escape' || evt.key === 'Esc') {
         evt.preventDefault();
         pointEditComponent.replaceWith(pointComponent);
         document.removeEventListener('keydown', escDownHandler);
       }
-    };
-
-    pointComponent.setRollUpButtonClickHandler(() => {
-      pointComponent.replaceWith(pointEditComponent);
-      document.addEventListener('keydown', escDownHandler);
-    });
-
-    pointEditComponent.setFormSubmitHandler(() => {
-      pointEditComponent.replaceWith(pointComponent);
-      document.removeEventListener('keydown', escDownHandler);
-    });
-
-    pointEditComponent.setRollUpButtonClickHandler(() => {
-      pointEditComponent.replaceWith(pointComponent);
-      document.removeEventListener('keydown', escDownHandler);
-    });
+    }
 
     pointComponent.renderInto(this.#listComponent.element);
   }
