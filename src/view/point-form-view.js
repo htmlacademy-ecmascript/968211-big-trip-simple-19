@@ -142,36 +142,34 @@ export default class PointFormView extends AbstractStatefulView {
   #types;
   #offersByType;
   #destinations;
+  #handleFormSubmit;
+  #handleRollUpButtonClick;
 
-  constructor({ point, types, offersByType, destinations }) {
+  constructor({ point, types, offersByType, destinations, onFormSubmit, onRollUpButtonClick }) {
     super();
     this.#point = point || getBlankPoint(destinations);
     this.#types = types;
     this.#offersByType = offersByType;
     this.#destinations = destinations;
+
+    this.#handleFormSubmit = onFormSubmit;
+    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
+
+    this.#handleRollUpButtonClick = onRollUpButtonClick;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
   }
 
   get template() {
     return createTemplate(this.#point, this.#types, this.#offersByType, this.#destinations);
   }
 
-  setFormSubmitHandler(callback) {
-    this._callback.formSubmit = callback;
-    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
-  }
-
-  setRollUpButtonClickHandler(callback) {
-    this._callback.rollUpButtonClick = callback;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
-  }
-
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this._callback.formSubmit();
+    this.#handleFormSubmit();
   };
 
   #rollUpButtonClickHandler = (evt) => {
     evt.preventDefault();
-    this._callback.rollUpButtonClick();
+    this.#handleRollUpButtonClick();
   };
 }

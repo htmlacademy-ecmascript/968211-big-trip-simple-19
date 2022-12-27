@@ -14,16 +14,17 @@ const listParentElement = document.querySelector('.trip-events');
 export default class PagePresenter {
   #model = new PageModel();
 
-  #filterComponent = new FilterView();
+  #filterComponent;
   #newPointButtonComponent = new NewPointButtonView();
   #sortComponent = new SortView();
   #listComponent = new PointsListView();
 
   init() {
+    const points = this.#model.points;
+
+    this.#filterComponent = new FilterView({ points });
     this.#filterComponent.renderInto(headerElement);
     this.#newPointButtonComponent.renderInto(headerElement);
-
-    const points = this.#model.points;
 
     if (points.length) {
       this.#sortComponent.renderInto(listParentElement);
@@ -38,42 +39,40 @@ export default class PagePresenter {
   }
 
   #renderPoint(point) {
+    let pointEditComponent = null;
+
     const pointComponent = new PointView({
       point,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
+      onRollUpButtonClick: () => {
+        pointComponent.replaceWith(pointEditComponent);
+        document.addEventListener('keydown', escDownHandler);
+      },
     });
 
-    const pointEditComponent = new PointFormView({
+    pointEditComponent = new PointFormView({
       point,
       types: this.#model.types,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
+      onFormSubmit: () => {
+        pointEditComponent.replaceWith(pointComponent);
+        document.removeEventListener('keydown', escDownHandler);
+      },
+      onRollUpButtonClick: () => {
+        pointEditComponent.replaceWith(pointComponent);
+        document.removeEventListener('keydown', escDownHandler);
+      },
     });
 
-
-    const escDownHandler = (evt) => {
+    function escDownHandler (evt) {
       if (evt.key === 'Escape' || evt.key === 'Esc') {
         evt.preventDefault();
         pointEditComponent.replaceWith(pointComponent);
         document.removeEventListener('keydown', escDownHandler);
       }
-    };
-
-    pointComponent.setRollUpButtonClickHandler(() => {
-      pointComponent.replaceWith(pointEditComponent);
-      document.addEventListener('keydown', escDownHandler);
-    });
-
-    pointEditComponent.setFormSubmitHandler(() => {
-      pointEditComponent.replaceWith(pointComponent);
-      document.removeEventListener('keydown', escDownHandler);
-    });
-
-    pointEditComponent.setRollUpButtonClickHandler(() => {
-      pointEditComponent.replaceWith(pointComponent);
-      document.removeEventListener('keydown', escDownHandler);
-    });
+    }
 
     pointComponent.renderInto(this.#listComponent.element);
   }
