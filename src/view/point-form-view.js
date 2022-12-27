@@ -1,6 +1,6 @@
-import { createElement } from '../render.js';
 import { formatDateTime } from '../utils.js';
 import { DateFormat, getBlankPoint } from '../const.js';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 function getEventTypeListTemplate(currentType, possibleTypes) {
   return `<div class="event__type-list">
@@ -137,14 +137,14 @@ function createTemplate(point, types, offersByType, destinations) {
 }
 
 
-export default class PointFormView {
-  #element;
+export default class PointFormView extends AbstractStatefulView {
   #point;
   #types;
   #offersByType;
   #destinations;
 
   constructor({ point, types, offersByType, destinations }) {
+    super();
     this.#point = point || getBlankPoint(destinations);
     this.#types = types;
     this.#offersByType = offersByType;
@@ -155,15 +155,23 @@ export default class PointFormView {
     return createTemplate(this.#point, this.#types, this.#offersByType, this.#destinations);
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
-    }
-
-    return this.#element;
+  setFormSubmitHandler(callback) {
+    this._callback.formSubmit = callback;
+    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
   }
 
-  removeElement() {
-    this.#element = null;
+  setRollUpButtonClickHandler(callback) {
+    this._callback.rollUpButtonClick = callback;
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
   }
+
+  #formSubmitHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.formSubmit();
+  };
+
+  #rollUpButtonClickHandler = (evt) => {
+    evt.preventDefault();
+    this._callback.rollUpButtonClick();
+  };
 }
