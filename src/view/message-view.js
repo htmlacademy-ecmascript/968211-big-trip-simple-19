@@ -1,10 +1,10 @@
-import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
 function createTemplate(message) {
   return `<p class="trip-events__msg">${message}</p>`;
 }
 
-export default class MessageView extends AbstractStatefulView {
+export default class MessageView extends AbstractView {
   #message;
 
   constructor({ message }) {
