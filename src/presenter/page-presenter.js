@@ -18,7 +18,6 @@ export default class PagePresenter {
   #newPointButtonComponent = new NewPointButtonView();
   #sortComponent = new SortView();
   #listComponent = new PointsListView();
-  #messageComponent;
 
   init() {
     this.#filterComponent.renderInto(headerElement);
@@ -31,10 +30,10 @@ export default class PagePresenter {
       this.#listComponent.renderInto(listParentElement);
       points.forEach((point) => this.#renderPoint(point));
     } else {
-      this.#messageComponent = new MessageView({
+      const messageComponent = new MessageView({
         message: FilterValueToEmptyMessage[FilterValue.EVERTHING],
       });
-      this.#messageComponent.renderInto(listParentElement);
+      messageComponent.renderInto(listParentElement);
     }
   }
 
