@@ -12,7 +12,7 @@ export default class PageModel {
     destination: point.destination,
     dateFrom: point.date_from,
     dateTo: point.date_to,
-    price: point.base_price,
+    basePrice: point.base_price,
     offers: point.offers,
   }));
 

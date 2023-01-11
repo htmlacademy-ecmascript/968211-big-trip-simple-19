@@ -23,18 +23,27 @@ const FilterValue = {
   FUTURE: 'future',
 };
 
-const DefaultFilterValue = FilterValue.EVERTHING;
+const DEFAULT_FILTER_VALUE = FilterValue.EVERTHING;
 
 const FilterValueToEmptyMessage = {
   [FilterValue.EVERTHING]: 'Click New Event to create your first point',
   [FilterValue.FUTURE]: 'There are no future events now',
 };
 
+const SortType = {
+  DATE_ASC: 'date-asc',
+  PRICE_DESC: 'price-desc',
+};
+
+const DEFAULT_SORT_TYPE = SortType.DATE_ASC;
+
 export {
   TYPES,
   DateFormat,
   getBlankPoint,
   FilterValue,
-  DefaultFilterValue,
+  DEFAULT_FILTER_VALUE,
   FilterValueToEmptyMessage,
+  SortType,
+  DEFAULT_SORT_TYPE,
 };

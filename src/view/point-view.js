@@ -21,7 +21,7 @@ function createSelectedOffersTemplate({ selectedOfferIds, allOffers }) {
 }
 
 function createTemplate(point, offersByType, destinations) {
-  const { type, price, destination, offers: selectedOfferIds } = point;
+  const { type, basePrice, destination, offers: selectedOfferIds } = point;
   const { name: destinationName } = destinations.find((dest) => dest.id === destination);
   const dateFrom = formatDateTime(point.dateFrom, DateFormat.POINT_DAY);
   const dateFromTag = formatDateTime(point.dateFrom, DateFormat.POINT_DAY_DATETIME_TAG);
@@ -50,7 +50,7 @@ function createTemplate(point, offersByType, destinations) {
                 </p>
               </div>
               <p class="event__price">
-                &euro;&nbsp;<span class="event__price-value">${price}</span>
+                &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
               </p>
               ${selectedOffersTemplate}
               <button class="event__rollup-btn" type="button">

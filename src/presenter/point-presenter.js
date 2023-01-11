@@ -14,11 +14,13 @@ export default class PointPresenter {
   #point;
   #mode = Mode.DEFAULT;
   #handleModeChange;
+  #handlePointChange;
 
-  constructor({ model, container, onModeChange }) {
+  constructor({ model, container, onModeChange, onPointChange }) {
     this.#model = model;
     this.#container = container;
     this.#handleModeChange = onModeChange;
+    this.#handlePointChange = onPointChange;
   }
 
   init(point) {
@@ -47,7 +49,7 @@ export default class PointPresenter {
       types: this.#model.types,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
-      onFormSubmit: this.#replaceFormToPoint,
+      onFormSubmit: this.#handleFormSubmit,
       onRollUpButtonClick: this.#replaceFormToPoint,
     });
 
@@ -103,4 +105,9 @@ export default class PointPresenter {
     this.#pointComponent.remove();
     this.#pointEditComponent.remove();
   }
+
+  #handleFormSubmit = (point) => {
+    this.#handlePointChange(point);
+    this.#replaceFormToPoint();
+  };
 }

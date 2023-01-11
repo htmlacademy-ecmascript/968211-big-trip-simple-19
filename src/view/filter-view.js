@@ -1,9 +1,9 @@
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import { FilterValue, DefaultFilterValue } from '../const.js';
+import { FilterValue, DEFAULT_FILTER_VALUE } from '../const.js';
 
 function createTemplate(points) {
   const filterItems = Object.values(FilterValue).map((filterValue) => {
-    const checked = filterValue === DefaultFilterValue ? 'checked' : '';
+    const checked = filterValue === DEFAULT_FILTER_VALUE ? 'checked' : '';
     const disabled = !points.length && !checked ? 'disabled' : '';
 
     return `<div class="trip-filters__filter">
