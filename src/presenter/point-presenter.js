@@ -87,11 +87,10 @@ export default class PointPresenter {
     this.#mode = Mode.DEFAULT;
   };
 
-  #escDownHandler = (evt)=> {
+  #escDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
-      this.#pointEditComponent.replaceWith(this.#pointComponent);
-      document.removeEventListener('keydown', this.#escDownHandler);
+      this.#replaceFormToPoint();
     }
   };
 
