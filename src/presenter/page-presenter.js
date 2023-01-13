@@ -59,7 +59,7 @@ export default class PagePresenter {
       const pointPresenter = new PointPresenter({
         model: this.#model,
         container: this.#listComponent.element,
-        onModeChange: this.#resetPointPresentersView,
+        onEditFormCreation: this.#resetPointPresentersView,
         onPointChange: this.#updatePoint,
       });
       pointPresenter.init(point);

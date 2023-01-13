@@ -1,110 +1,97 @@
 import PointView from '../view/point-view.js';
 import PointFormView from '../view/point-form-view.js';
 
-const Mode = {
-  DEFAULT: 'DEFAULT',
-  EDITING: 'EDITING',
-};
-
 export default class PointPresenter {
   #model;
   #container;
-  #pointComponent;
-  #pointEditComponent;
+  // Ссылка на текущий компонент: PointView || PointFormView
+  #component;
   #point;
-  #mode = Mode.DEFAULT;
-  #handleModeChange;
+  #handleEditFormCreation;
   #handlePointChange;
 
-  constructor({ model, container, onModeChange, onPointChange }) {
+  constructor({ model, container, onEditFormCreation, onPointChange }) {
     this.#model = model;
     this.#container = container;
-    this.#handleModeChange = onModeChange;
+    this.#handleEditFormCreation = onEditFormCreation;
     this.#handlePointChange = onPointChange;
   }
 
   init(point) {
     this.#point = point;
-    this.#renderPoint(point);
+    this.#render();
   }
 
-  #renderPoint(point) {
-    // Добавим возможность повторно инициализировать презентер задачи.
-    // Для этого в методе init будем запоминать предыдущие компоненты.
-    // Если они null, то есть не создавались, рендерим как раньше.
-    // Если они отличны от null, то есть создавались, то заменяем их новыми и удаляем
+  resetView() {
+    if (!(this.#component instanceof PointView)) {
+      this.#replaceFormToPoint();
+    }
+  }
 
-    const prevPointComponent = this.#pointComponent;
-    const prevPointEditComponent = this.#pointEditComponent;
+  destroy() {
+    this.#component.remove();
+  }
 
-    this.#pointComponent = new PointView({
-      point,
+  #render() {
+    const prevComponent = this.#component;
+    // Создаем компонент формы только если предыдущий компонент - форма,
+    // во всех остальных случаях создаем компонент point
+    this.#component = prevComponent instanceof PointFormView
+      ? this.#createPointEditComponent() : this.#createPointComponent();
+
+    if (!prevComponent) {
+      this.#component.renderInto(this.#container);
+      return;
+    }
+
+    if (this.#container.contains(prevComponent.element)) {
+      prevComponent.replaceWith(this.#component);
+    }
+
+    prevComponent.remove();
+  }
+
+  #createPointComponent() {
+    return new PointView({
+      point: this.#point,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
       onRollUpButtonClick: this.#replacePointToForm,
     });
+  }
 
-    this.#pointEditComponent = new PointFormView({
-      point,
+  #createPointEditComponent() {
+    return new PointFormView({
+      point: this.#point,
       types: this.#model.types,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
       onFormSubmit: this.#handleFormSubmit,
       onRollUpButtonClick: this.#replaceFormToPoint,
     });
-
-    if (!prevPointComponent || !prevPointEditComponent) {
-      this.#pointComponent.renderInto(this.#container);
-      return;
-    }
-
-    // Проверка на наличие в DOM необходима,
-    // чтобы не пытаться заменить то, что не было отрисовано
-    if (this.#container.contains(prevPointComponent.element)) {
-      prevPointComponent.replaceWith(this.#pointComponent);
-    }
-
-    if (this.#container.contains(prevPointEditComponent.element)) {
-      prevPointEditComponent.replaceWith(this.#pointEditComponent);
-    }
-
-    prevPointComponent.remove();
-    prevPointEditComponent.remove();
   }
 
   #replacePointToForm = () => {
-    // в презентере маршрута мы «прикажем» всем презентерам точек маршрута вернуть представление в исходное состояние,
-    // когда пользователь открывает форму редактирования.
-    this.#pointComponent.replaceWith(this.#pointEditComponent);
+    this.#handleEditFormCreation();
+    const pointEditComponent = this.#createPointEditComponent();
+    this.#component.replaceWith(pointEditComponent);
+    this.#component = pointEditComponent;
     document.addEventListener('keydown', this.#escDownHandler);
-    this.#handleModeChange();
-    this.#mode = Mode.EDITING;
   };
 
   #replaceFormToPoint = () => {
-    this.#pointEditComponent.replaceWith(this.#pointComponent);
+    const pointComponent = this.#createPointComponent();
+    this.#component.replaceWith(pointComponent);
+    this.#component = pointComponent;
     document.removeEventListener('keydown', this.#escDownHandler);
-    this.#mode = Mode.DEFAULT;
   };
 
-  #escDownHandler = (evt)=> {
+  #escDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
-      this.#pointEditComponent.replaceWith(this.#pointComponent);
-      document.removeEventListener('keydown', this.#escDownHandler);
-    }
-  };
-
-  resetView() {
-    if (this.#mode !== Mode.DEFAULT) {
       this.#replaceFormToPoint();
     }
-  }
-
-  destroy() {
-    this.#pointComponent.remove();
-    this.#pointEditComponent.remove();
-  }
+  };
 
   #handleFormSubmit = (point) => {
     this.#handlePointChange(point);
