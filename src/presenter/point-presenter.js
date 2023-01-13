@@ -28,6 +28,19 @@ export default class PointPresenter {
     this.#renderPoint(point);
   }
 
+  resetView = () => {
+    if (this.#mode !== Mode.DEFAULT) {
+      // reset state && rerender
+      this.#pointEditComponent.reset(this.#point);
+      this.#replaceFormToPoint();
+    }
+  };
+
+  destroy() {
+    this.#pointComponent.remove();
+    this.#pointEditComponent.remove();
+  }
+
   #renderPoint(point) {
     // Добавим возможность повторно инициализировать презентер задачи.
     // Для этого в методе init будем запоминать предыдущие компоненты.
@@ -50,7 +63,7 @@ export default class PointPresenter {
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
       onFormSubmit: this.#handleFormSubmit,
-      onRollUpButtonClick: this.#replaceFormToPoint,
+      onRollUpButtonClick: this.resetView,
     });
 
     if (!prevPointComponent || !prevPointEditComponent) {
@@ -73,8 +86,6 @@ export default class PointPresenter {
   }
 
   #replacePointToForm = () => {
-    // в презентере маршрута мы «прикажем» всем презентерам точек маршрута вернуть представление в исходное состояние,
-    // когда пользователь открывает форму редактирования.
     this.#pointComponent.replaceWith(this.#pointEditComponent);
     document.addEventListener('keydown', this.#escDownHandler);
     this.#handleModeChange();
@@ -90,20 +101,9 @@ export default class PointPresenter {
   #escDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
-      this.#replaceFormToPoint();
+      this.resetView();
     }
   };
-
-  resetView() {
-    if (this.#mode !== Mode.DEFAULT) {
-      this.#replaceFormToPoint();
-    }
-  }
-
-  destroy() {
-    this.#pointComponent.remove();
-    this.#pointEditComponent.remove();
-  }
 
   #handleFormSubmit = (point) => {
     this.#handlePointChange(point);

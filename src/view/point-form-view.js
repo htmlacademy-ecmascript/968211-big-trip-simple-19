@@ -137,7 +137,6 @@ function createTemplate(point, types, offersByType, destinations) {
 
 
 export default class PointFormView extends AbstractStatefulView {
-  #point;
   #types;
   #offersByType;
   #destinations;
@@ -146,29 +145,77 @@ export default class PointFormView extends AbstractStatefulView {
 
   constructor({ point, types, offersByType, destinations, onFormSubmit, onRollUpButtonClick }) {
     super();
-    this.#point = point || getBlankPoint(destinations);
+    this._setState(this.constructor.parsePointToState(point || getBlankPoint(destinations)));
     this.#types = types;
     this.#offersByType = offersByType;
     this.#destinations = destinations;
 
     this.#handleFormSubmit = onFormSubmit;
-    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
-
     this.#handleRollUpButtonClick = onRollUpButtonClick;
-    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
+
+    this._restoreHandlers();
   }
 
   get template() {
-    return createTemplate(this.#point, this.#types, this.#offersByType, this.#destinations);
+    return createTemplate(this._state, this.#types, this.#offersByType, this.#destinations);
+  }
+
+  _restoreHandlers() {
+    this.element.querySelector('form').addEventListener('submit', this.#formSubmitHandler);
+    this.element.querySelector('.event__rollup-btn').addEventListener('click', this.#rollUpButtonClickHandler);
+    this.element.querySelector('.event__type-list').addEventListener('change', this.#changePointTypeClickHandler);
+    this.element.querySelector('#event-destination-1').addEventListener('change', this.#destinationChangeHandler);
+    this.element.querySelector('#event-price-1').addEventListener('change', this.#basePriceChangeHandler);
+  }
+
+  reset(point) {
+    this.updateElement(
+      this.constructor.parsePointToState(point),
+    );
   }
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit(this.#point);
+    this.#handleFormSubmit(this._state);
   };
 
   #rollUpButtonClickHandler = (evt) => {
     evt.preventDefault();
     this.#handleRollUpButtonClick();
   };
+
+  #changePointTypeClickHandler = (evt) => {
+    if (evt.target.tagName === 'INPUT' && evt.target.value !== this._state.type) {
+      this.updateElement({
+        type: evt.target.value,
+        offers: [],
+      });
+    }
+  };
+
+  #destinationChangeHandler = (evt) => {
+    const previousId = this._state.destination;
+    const selectedId = this.#destinations
+      .find((destination) => destination.name === evt.target.value)
+      ?.id;
+
+    if (selectedId === undefined || selectedId === previousId) {
+      return;
+    }
+
+    this.updateElement({ destination: selectedId });
+  };
+
+  #basePriceChangeHandler = (evt) => {
+    evt.preventDefault();
+    this._setState({ basePrice: evt.target.value });
+  };
+
+  static parsePointToState(point) {
+    return { ...point };
+  }
+
+  static parseStateToPoint(state) {
+    return { ...state };
+  }
 }
