@@ -1,6 +1,9 @@
 import { formatDateTime } from '../utils.js';
 import { DateFormat, getBlankPoint } from '../const.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import flatpickr from 'flatpickr';
+
+import 'flatpickr/dist/flatpickr.min.css';
 
 function getEventTypeListTemplate(currentType, possibleTypes) {
   return `<div class="event__type-list">
@@ -142,6 +145,7 @@ export default class PointFormView extends AbstractStatefulView {
   #destinations;
   #handleFormSubmit;
   #handleRollUpButtonClick;
+  #datepickers = [];
 
   constructor({ point, types, offersByType, destinations, onFormSubmit, onRollUpButtonClick }) {
     super();
@@ -166,6 +170,48 @@ export default class PointFormView extends AbstractStatefulView {
     this.element.querySelector('.event__type-list').addEventListener('change', this.#changePointTypeClickHandler);
     this.element.querySelector('#event-destination-1').addEventListener('change', this.#destinationChangeHandler);
     this.element.querySelector('#event-price-1').addEventListener('change', this.#basePriceChangeHandler);
+    this.#setDatepickers();
+  }
+
+  removeElement() {
+    super.removeElement();
+
+    if (this.#datepickers.length) {
+      this.#datepickers.forEach((datepicker) => datepicker.destroy());
+      this.#datepickers = [];
+    }
+  }
+
+  #setDatepickers() {
+    const commonConfig = {
+      dateFormat: DateFormat.POINT_FORM_TIME_FOR_FLATPICKR,
+      enableTime: true,
+      allowInput: true,
+    };
+
+    this.#datepickers = [
+      flatpickr(
+        this.element.querySelector('#event-start-time-1'),
+        { ...commonConfig,
+          defaultDate: this._state.dateFrom,
+          onClose: (([userDate]) => {
+            const update = { dateFrom: userDate };
+            if (userDate > this._state.dateTo) {
+              update.dateTo = userDate;
+            }
+            this.updateElement(update);
+          }),
+        },
+      ),
+      flatpickr(
+        this.element.querySelector('#event-end-time-1'),
+        { ...commonConfig,
+          defaultDate: this._state.dateTo,
+          minDate: this._state.dateFrom,
+          onClose: (([userDate]) => this.updateElement({ dateTo: userDate })),
+        },
+      ),
+    ];
   }
 
   #formSubmitHandler = (evt) => {
