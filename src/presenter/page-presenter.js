@@ -100,12 +100,12 @@ export default class PagePresenter {
   };
 
   #sortPoints(sortType) {
-    const MAX_DATE_TIMESTAMP = 8640000000000000;
+    const MAX_DATE = new Date(8640000000000000);
 
     this.#points.sort((pointA, pointB) => {
       if (sortType === SortType.DATE_ASC) {
         // если dateFrom === falsy, помещаем point в конец списка
-        return new Date(pointA.dateFrom || MAX_DATE_TIMESTAMP) - new Date(pointB.dateFrom || MAX_DATE_TIMESTAMP);
+        return (pointA.dateFrom || MAX_DATE) - (pointB.dateFrom || MAX_DATE);
       } else if (sortType === SortType.PRICE_DESC) {
         return pointB.basePrice - pointA.basePrice;
       }

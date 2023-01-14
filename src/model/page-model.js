@@ -10,8 +10,8 @@ export default class PageModel {
     id: point.id,
     type: point.type,
     destination: point.destination,
-    dateFrom: point.date_from,
-    dateTo: point.date_to,
+    dateFrom: point.date_from ? new Date(point.date_from) : null,
+    dateTo: point.date_to ? new Date(point.date_to) : null,
     basePrice: point.base_price,
     offers: point.offers,
   }));
