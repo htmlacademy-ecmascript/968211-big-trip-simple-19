@@ -6,6 +6,7 @@ const DateFormat = {
   POINT_TIME: 'HH:mm',
   POINT_TIME_DATETIME_TAG: 'YYYY-MM-DD[T]HH:mm',
   POINT_FORM_TIME: 'DD/MM/YY HH:mm',
+  POINT_FORM_TIME_FOR_FLATPICKR: 'd/m/y H:i',
 };
 
 const getBlankPoint = (destinations) => ({

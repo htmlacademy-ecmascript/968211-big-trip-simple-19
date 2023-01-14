@@ -13,6 +13,10 @@ function getRandomNumber(min, max) {
 }
 
 function formatDateTime(datetime, formatTemplate) {
+  if (!(datetime instanceof Date) || isNaN(datetime)) {
+    return '';
+  }
+
   return dayjs(datetime).format(formatTemplate);
 }
 
