@@ -65,6 +65,10 @@ export default class AbstractView {
     this.constructor.render(this, container, this.constructor.RenderPosition.BEFOREEND);
   }
 
+  renderFirstInto(element) {
+    this.constructor.render(this, element, this.constructor.RenderPosition.AFTERBEGIN);
+  }
+
   replaceWith(newComponent) {
     this.constructor.replace(newComponent, this);
   }

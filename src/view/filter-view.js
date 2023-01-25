@@ -1,17 +1,15 @@
-import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
-import { FilterValue, DEFAULT_FILTER_VALUE } from '../const.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
-function createTemplate(points) {
-  const filterItems = Object.values(FilterValue).map((filterValue) => {
-    const checked = filterValue === DEFAULT_FILTER_VALUE ? 'checked' : '';
-    const disabled = !points.length && !checked ? 'disabled' : '';
-
-    return `<div class="trip-filters__filter">
-      <input id="filter-${filterValue}" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="${filterValue}" ${checked} ${disabled}>
-      <label class="trip-filters__filter-label" for="filter-${filterValue}">${filterValue}</label>
-    </div>`;
-  }).join('');
-
+function createTemplate(filters, activeFilterType) {
+  const filterItems = filters
+    .map(({ type, enabled }) => `<div class="trip-filters__filter">
+        <input id="filter-${type}" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter"
+          value="${type}"
+          ${activeFilterType === type ? 'checked' : ''}
+          ${enabled ? '' : 'disabled'}>
+        <label class="trip-filters__filter-label" for="filter-${type}">${type}</label>
+      </div>`)
+    .join('');
 
   return `<div class="trip-main__trip-controls  trip-controls">
             <div class="trip-controls__filters">
@@ -24,15 +22,26 @@ function createTemplate(points) {
           </div>`;
 }
 
-export default class FilterView extends AbstractStatefulView {
-  #points;
+export default class FilterView extends AbstractView {
+  #filters;
+  #activeFilterType;
+  #handleFilterTypeChange;
 
-  constructor({ points }) {
+  constructor({ filters, activeFilterType, onFilterTypeChange }) {
     super();
-    this.#points = points;
+    this.#filters = filters;
+    this.#activeFilterType = activeFilterType;
+    this.#handleFilterTypeChange = onFilterTypeChange;
+
+    this.element.addEventListener('change', this.#filterTypeChangeHandler);
   }
 
   get template() {
-    return createTemplate(this.#points);
+    return createTemplate(this.#filters, this.#activeFilterType);
   }
+
+  #filterTypeChangeHandler = (evt) => {
+    evt.preventDefault();
+    this.#handleFilterTypeChange(evt.target.value);
+  };
 }

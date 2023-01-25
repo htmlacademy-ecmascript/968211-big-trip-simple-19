@@ -19,16 +19,16 @@ const getBlankPoint = (destinations) => ({
   offers: [],
 });
 
-const FilterValue = {
-  EVERTHING: 'everthing',
+const FilterType = {
+  EVERYTHING: 'everything',
   FUTURE: 'future',
 };
 
-const DEFAULT_FILTER_VALUE = FilterValue.EVERTHING;
+const DEFAULT_FILTER_TYPE = FilterType.EVERYTHING;
 
-const FilterValueToEmptyMessage = {
-  [FilterValue.EVERTHING]: 'Click New Event to create your first point',
-  [FilterValue.FUTURE]: 'There are no future events now',
+const FilterTypeToEmptyMessage = {
+  [FilterType.EVERYTHING]: 'Click New Event to create your first point',
+  [FilterType.FUTURE]: 'There are no future events now',
 };
 
 const SortType = {
@@ -38,13 +38,27 @@ const SortType = {
 
 const DEFAULT_SORT_TYPE = SortType.DATE_ASC;
 
+const UserAction = {
+  UPDATE_POINT: 'UPDATE_POINT',
+  ADD_POINT: 'ADD_POINT',
+  DELETE_POINT: 'DELETE_POINT',
+};
+
+const UpdateType = {
+  PATCH: 'PATCH',
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR',
+};
+
 export {
   TYPES,
   DateFormat,
   getBlankPoint,
-  FilterValue,
-  DEFAULT_FILTER_VALUE,
-  FilterValueToEmptyMessage,
+  FilterType,
+  DEFAULT_FILTER_TYPE,
+  FilterTypeToEmptyMessage,
   SortType,
   DEFAULT_SORT_TYPE,
+  UserAction,
+  UpdateType,
 };
