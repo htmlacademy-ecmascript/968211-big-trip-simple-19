@@ -1,4 +1,4 @@
-import { getRandomArrayElement, getRandomNumber } from '../utils.js';
+import { getRandomArrayElement, getRandomNumber } from '../utils/common.js';
 
 
 const titles = [

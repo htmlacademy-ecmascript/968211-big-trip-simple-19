@@ -1,4 +1,4 @@
-import { getRandomArrayElement, getRandomNumber } from '../utils.js';
+import { getRandomArrayElement, getRandomNumber } from '../utils/common.js';
 
 const names = [ 'Chamonix', 'Amsterdam', 'Geneva', 'New York', 'Berlin', 'Paris', 'Warsaw'];
 const descriptions = [

@@ -1,10 +1,11 @@
 import PointView from '../view/point-view.js';
-import PointFormView from '../view/point-form-view.js';
+import { UpdateType, UserAction } from '../const.js';
+import PointEditFormView from '../view/point-edit-form-view.js';
 
 export default class PointPresenter {
   #model;
   #container;
-  // Ссылка на текущий компонент: PointView || PointFormView
+  // Ссылка на текущий компонент: PointView || PointEditFormView
   #component;
   #point;
   #handleEditFormCreation;
@@ -36,7 +37,7 @@ export default class PointPresenter {
     const prevComponent = this.#component;
     // Создаем компонент формы только если предыдущий компонент - форма,
     // во всех остальных случаях создаем компонент point
-    this.#component = prevComponent instanceof PointFormView
+    this.#component = prevComponent instanceof PointEditFormView
       ? this.#createPointEditComponent() : this.#createPointComponent();
 
     if (!prevComponent) {
@@ -61,13 +62,14 @@ export default class PointPresenter {
   }
 
   #createPointEditComponent() {
-    return new PointFormView({
+    return new PointEditFormView({
       point: this.#point,
       types: this.#model.types,
       offersByType: this.#model.offersByType,
       destinations: this.#model.destinations,
       onFormSubmit: this.#handleFormSubmit,
       onRollUpButtonClick: this.#replaceFormToPoint,
+      onDeleteClick: this.#handleDeleteClick,
     });
   }
 
@@ -93,8 +95,31 @@ export default class PointPresenter {
     }
   };
 
-  #handleFormSubmit = (point) => {
-    this.#handlePointChange(point);
+  #handleFormSubmit = (updatedPoint) => {
+    // Проверяем, поменялись ли в задаче данные, которые попадают под фильтрацию и сортировку,
+    // а значит требуют перерисовки списка - если таких нет, это PATCH-обновление
+    // изменения, инициирующие MINOR update:
+    // dateFrom (фильтрация и сортировка)
+    // dateTo (фильтрация)
+    // basePrice (сортировка)
+
+    const isMinorUpdate = updatedPoint.dateFrom - this.#point.dateFrom !== 0
+      || updatedPoint.dateTo - this.#point.dateTo !== 0
+      || updatedPoint.basePrice !== this.#point.basePrice;
+
+    this.#handlePointChange(
+      UserAction.UPDATE_POINT,
+      isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
+      updatedPoint,
+    );
     this.#replaceFormToPoint();
+  };
+
+  #handleDeleteClick = (point) => {
+    this.#handlePointChange(
+      UserAction.DELETE_POINT,
+      UpdateType.MINOR,
+      point,
+    );
   };
 }

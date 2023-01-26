@@ -1,48 +1,114 @@
 import PageModel from '../model/page-model.js';
-import FilterView from '../view/filter-view.js';
 import NewPointButtonView from '../view/new-point-button-view.js';
 import SortView from '../view/sort-view.js';
 import MessageView from '../view/message-view.js';
 import PointsListView from '../view/point-list-view.js';
-import { DEFAULT_SORT_TYPE, FilterValue, FilterValueToEmptyMessage, SortType } from '../const.js';
+import {
+  DEFAULT_FILTER_TYPE,
+  DEFAULT_SORT_TYPE,
+  FilterTypeToEmptyMessage,
+  SortType,
+  UpdateType,
+  UserAction,
+} from '../const.js';
 import PointPresenter from './point-presenter.js';
+import FilterModel from '../model/filter-model.js';
+import FilterPresenter from './filter-presenter.js';
+import { filter } from '../utils/filter.js';
+import NewPointPresenter from './new-point-presenter.js';
 
 const headerElement = document.querySelector('.trip-main');
 const listParentElement = document.querySelector('.trip-events');
 
 export default class PagePresenter {
   #model = new PageModel();
-  #points = [];
-
-  #filterComponent;
-  #newPointButtonComponent = new NewPointButtonView();
+  #filterModel = new FilterModel();
+  #filterPresenter;
+  #newPointButtonComponent;
   #sortComponent;
   #listComponent = new PointsListView();
   // если компонент будет создаваться, понадобится ссылка на него для удаления dom-элемента при добавлении новой точки
   #messageComponent;
   #pointPresenter = new Map();
+  #newPointPresenter;
   #currentSortType = DEFAULT_SORT_TYPE;
 
+  constructor() {
+    this.#newPointButtonComponent = new NewPointButtonView({
+      onClick: this.#handleNewPointButtonClick,
+    });
+
+    this.#newPointPresenter = new NewPointPresenter({
+      model: this.#model,
+      containerComponent: this.#listComponent,
+      onPointAdd: this.#handleViewAction,
+      onDestroy: this.#onNewPointFormClose,
+    });
+
+    this.#model.addObserver(this.#handleModelEvent);
+    this.#filterModel.addObserver(this.#handleModelEvent);
+  }
+
+  get points() {
+    const filterType = this.#filterModel.filterType;
+    const filteredPoints = filter[filterType](this.#model.points);
+    return this.constructor.getSortedPoints(this.#currentSortType, filteredPoints);
+  }
+
   init() {
-    this.#points = this.#model.points;
-    this.#sortPoints(this.#currentSortType);
-
-    this.#filterComponent = new FilterView({ points: this.#points });
-    this.#filterComponent.renderInto(headerElement);
+    this.#renderFilter();
     this.#newPointButtonComponent.renderInto(headerElement);
-
-    // Board includes: (list, sort, points) || no points message
+    // Board includes: (sort, list, points) || no points message
     this.#renderBoard();
   }
 
+  createPoint() {
+    // сброс фильтра и сортировки в начальное состояние
+    // если текущий тип фильтра не дефолтный - изменение типа вызовет событие модели, по которому сбросится сортировка
+    if (this.#filterModel.filterType !== DEFAULT_FILTER_TYPE) {
+      this.#filterModel.setFilterType(UpdateType.MAJOR, DEFAULT_FILTER_TYPE);
+      // если фильтр был дефолтный, а сортировка нет - сбрасываем напрямую
+    } else if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
+      this.#clearBoard({ resetSort: true });
+      this.#renderBoard();
+    } else {
+      // закрытие открытой формы редактирования
+      this.#resetPointPresentersView();
+    }
+
+    this.#newPointPresenter.init();
+  }
+
   #renderBoard() {
-    if (!this.#points.length) {
+    const points = this.points;
+
+    if (!points.length) {
       this.#renderNoPoints();
       return;
     }
 
     this.#renderSort();
-    this.#renderPointList();
+    this.#renderPointList(points);
+  }
+
+  #clearBoard({ resetSort = false } = {}) {
+    this.#newPointPresenter.destroy();
+    this.#clearPointList();
+    this.#sortComponent.remove();
+    this.#messageComponent?.remove();
+
+    if (resetSort) {
+      this.#currentSortType = DEFAULT_SORT_TYPE;
+    }
+  }
+
+  #renderFilter() {
+    this.#filterPresenter = new FilterPresenter({
+      model: this.#model,
+      filterModel: this.#filterModel,
+      container: headerElement,
+    });
+    this.#filterPresenter.init();
   }
 
   #renderSort() {
@@ -53,14 +119,17 @@ export default class PagePresenter {
     this.#sortComponent.renderInto(listParentElement);
   }
 
-  #renderPointList() {
+  #renderPointList(points) {
     this.#listComponent.renderInto(listParentElement);
-    this.#points.forEach((point) => {
+    points.forEach((point) => {
       const pointPresenter = new PointPresenter({
         model: this.#model,
         container: this.#listComponent.element,
-        onEditFormCreation: this.#resetPointPresentersView,
-        onPointChange: this.#updatePoint,
+        onEditFormCreation: () => {
+          this.#newPointPresenter.destroy();
+          this.#resetPointPresentersView();
+        },
+        onPointChange: this.#handleViewAction,
       });
       pointPresenter.init(point);
       this.#pointPresenter.set(point.id, pointPresenter);
@@ -75,7 +144,7 @@ export default class PagePresenter {
 
   #renderNoPoints() {
     this.#messageComponent = new MessageView({
-      message: FilterValueToEmptyMessage[FilterValue.EVERTHING],
+      message: FilterTypeToEmptyMessage[this.#filterModel.filterType],
     });
     this.#messageComponent.renderInto(listParentElement);
   }
@@ -84,25 +153,65 @@ export default class PagePresenter {
     this.#pointPresenter.forEach((presenter) => presenter.resetView());
   };
 
-  #updatePoint = (updatedPoint) => {
-    this.#points = this.#points.map((point) => point.id === updatedPoint.id ? updatedPoint : point);
-    // Реинициализируем презенетер измененной точки
-    this.#pointPresenter.get(updatedPoint.id).init(updatedPoint);
-  };
-
   #handleSortTypeChange = (sortType) => {
     if (this.#currentSortType === sortType) {
       return;
     }
-    this.#sortPoints(sortType);
-    this.#clearPointList();
-    this.#renderPointList();
+
+    this.#currentSortType = sortType;
+    this.#clearBoard();
+    this.#renderBoard();
   };
 
-  #sortPoints(sortType) {
+  #handleModelEvent = (updateType, updatedPoint) => {
+    switch (updateType) {
+      case UpdateType.PATCH:
+        // изменение точки в части данных, не влияющих на положение или наличие в списке
+        // обновляем измененную точку
+        this.#pointPresenter.get(updatedPoint.id).init(updatedPoint);
+        break;
+      case UpdateType.MINOR:
+        // триггер: удаление или добавление точки, изменение значения поля, которое влияет на сортировку или фильтр
+        // обновляем список
+        this.#clearBoard();
+        this.#renderBoard();
+        break;
+      case UpdateType.MAJOR:
+        // триггер: смена фильтра
+        // обновляем список, сбрасываем сортировку
+        this.#clearBoard({ resetSort: true });
+        this.#renderBoard();
+        break;
+    }
+  };
+
+  #handleViewAction = (actionType, updateType, point) => {
+    switch (actionType) {
+      case UserAction.UPDATE_POINT:
+        this.#model.updatePoint(updateType, point);
+        break;
+      case UserAction.ADD_POINT:
+        this.#model.addPoint(updateType, point);
+        break;
+      case UserAction.DELETE_POINT:
+        this.#model.deletePoint(updateType, point);
+        break;
+    }
+  };
+
+  #handleNewPointButtonClick = () => {
+    this.createPoint();
+    this.#newPointButtonComponent.element.disabled = true;
+  };
+
+  #onNewPointFormClose = () => {
+    this.#newPointButtonComponent.element.disabled = false;
+  };
+
+  static getSortedPoints(sortType, points) {
     const MAX_DATE = new Date(8640000000000000);
 
-    this.#points.sort((pointA, pointB) => {
+    return points.sort((pointA, pointB) => {
       if (sortType === SortType.DATE_ASC) {
         // если dateFrom === falsy, помещаем point в конец списка
         return (pointA.dateFrom || MAX_DATE) - (pointB.dateFrom || MAX_DATE);
@@ -110,7 +219,5 @@ export default class PagePresenter {
         return pointB.basePrice - pointA.basePrice;
       }
     });
-
-    this.#currentSortType = sortType;
   }
 }

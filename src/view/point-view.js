@@ -1,5 +1,5 @@
 import { DateFormat } from '../const.js';
-import { formatDateTime } from '../utils.js';
+import { formatDateTime } from '../utils/common.js';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
 
 
