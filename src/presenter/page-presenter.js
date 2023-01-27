@@ -1,4 +1,3 @@
-import PageModel from '../model/page-model.js';
 import NewPointButtonView from '../view/new-point-button-view.js';
 import SortView from '../view/sort-view.js';
 import MessageView from '../view/message-view.js';
@@ -7,22 +6,25 @@ import {
   DEFAULT_FILTER_TYPE,
   DEFAULT_SORT_TYPE,
   FilterTypeToEmptyMessage,
+  INIT_ERROR_MESSAGE,
+  LOADING_MESSAGE,
   SortType,
   UpdateType,
   UserAction,
 } from '../const.js';
 import PointPresenter from './point-presenter.js';
-import FilterModel from '../model/filter-model.js';
 import FilterPresenter from './filter-presenter.js';
 import { filter } from '../utils/filter.js';
 import NewPointPresenter from './new-point-presenter.js';
+
+const MAX_DATE = new Date(8640000000000000);
 
 const headerElement = document.querySelector('.trip-main');
 const listParentElement = document.querySelector('.trip-events');
 
 export default class PagePresenter {
-  #model = new PageModel();
-  #filterModel = new FilterModel();
+  #model;
+  #filterModel;
   #filterPresenter;
   #newPointButtonComponent;
   #sortComponent;
@@ -33,7 +35,10 @@ export default class PagePresenter {
   #newPointPresenter;
   #currentSortType = DEFAULT_SORT_TYPE;
 
-  constructor() {
+  constructor({ model, filterModel }) {
+    this.#model = model;
+    this.#filterModel = filterModel;
+
     this.#newPointButtonComponent = new NewPointButtonView({
       onClick: this.#handleNewPointButtonClick,
     });
@@ -56,10 +61,9 @@ export default class PagePresenter {
   }
 
   init() {
+    this.#model.init();
     this.#renderFilter();
     this.#newPointButtonComponent.renderInto(headerElement);
-    // Board includes: (sort, list, points) || no points message
-    this.#renderBoard();
   }
 
   createPoint() {
@@ -80,10 +84,11 @@ export default class PagePresenter {
   }
 
   #renderBoard() {
+    // Board includes: (sort, list, points) || no points message
     const points = this.points;
 
     if (!points.length) {
-      this.#renderNoPoints();
+      this.#renderMessage(FilterTypeToEmptyMessage[this.#filterModel.filterType]);
       return;
     }
 
@@ -95,7 +100,7 @@ export default class PagePresenter {
     this.#newPointPresenter.destroy();
     this.#clearPointList();
     this.#sortComponent.remove();
-    this.#messageComponent?.remove();
+    this.#clearMessage();
 
     if (resetSort) {
       this.#currentSortType = DEFAULT_SORT_TYPE;
@@ -142,11 +147,16 @@ export default class PagePresenter {
     this.#listComponent.remove();
   }
 
-  #renderNoPoints() {
-    this.#messageComponent = new MessageView({
-      message: FilterTypeToEmptyMessage[this.#filterModel.filterType],
-    });
+  #renderMessage(message) {
+    this.#messageComponent = new MessageView({ message });
     this.#messageComponent.renderInto(listParentElement);
+  }
+
+  #clearMessage() {
+    if (this.#messageComponent) {
+      this.#messageComponent.remove();
+      this.#messageComponent = null;
+    }
   }
 
   #resetPointPresentersView = () => {
@@ -182,6 +192,22 @@ export default class PagePresenter {
         this.#clearBoard({ resetSort: true });
         this.#renderBoard();
         break;
+      case UpdateType.BEFORE_INIT:
+        // перед загрузкой данных с сервера
+        this.#renderMessage(LOADING_MESSAGE);
+        break;
+      case UpdateType.INIT:
+        // триггер: загрузка данных с сервера успешно завершена
+        // удаляем сообщение о загрузке, включаем кнопку создания точки
+        this.#clearMessage();
+        this.#newPointButtonComponent.element.disabled = false;
+        this.#renderBoard();
+        break;
+      case UpdateType.INIT_ERROR:
+        // показ сообщения об ошибке
+        this.#clearMessage();
+        this.#renderMessage(INIT_ERROR_MESSAGE);
+        break;
     }
   };
 
@@ -209,8 +235,6 @@ export default class PagePresenter {
   };
 
   static getSortedPoints(sortType, points) {
-    const MAX_DATE = new Date(8640000000000000);
-
     return points.sort((pointA, pointB) => {
       if (sortType === SortType.DATE_ASC) {
         // если dateFrom === falsy, помещаем point в конец списка

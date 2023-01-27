@@ -9,13 +9,12 @@ const DateFormat = {
   POINT_FORM_TIME_FOR_FLATPICKR: 'd/m/y H:i',
 };
 
-const getBlankPoint = (destinations) => ({
-  id: null,
+const getBlankPoint = () => ({
   type: TYPES[0],
-  destination: destinations[0].id,
+  destination: null, // destination id
   dateFrom: new Date(Date.now()),
   dateTo: new Date(Date.now() + 1000 * 60 * 60 * 24),
-  price: null,
+  basePrice: null,
   offers: [],
 });
 
@@ -30,6 +29,8 @@ const FilterTypeToEmptyMessage = {
   [FilterType.EVERYTHING]: 'Click New Event to create your first point',
   [FilterType.FUTURE]: 'There are no future events now',
 };
+
+const LOADING_MESSAGE = 'Loading...';
 
 const SortType = {
   DATE_ASC: 'date-asc',
@@ -48,7 +49,12 @@ const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
+  BEFORE_INIT: 'BEFORE_INIT',
+  INIT: 'INIT',
+  INIT_ERROR: 'INIT_ERROR',
 };
+
+const INIT_ERROR_MESSAGE = 'Something went wrong.<br>Please, try again later.';
 
 export {
   TYPES,
@@ -57,8 +63,10 @@ export {
   FilterType,
   DEFAULT_FILTER_TYPE,
   FilterTypeToEmptyMessage,
+  LOADING_MESSAGE,
   SortType,
   DEFAULT_SORT_TYPE,
   UserAction,
   UpdateType,
+  INIT_ERROR_MESSAGE,
 };

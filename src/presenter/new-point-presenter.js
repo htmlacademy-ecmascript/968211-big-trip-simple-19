@@ -1,5 +1,4 @@
 import { UpdateType, UserAction } from '../const.js';
-import { getRandomNumber } from '../utils/common.js';
 import PointAddFormView from '../view/point-add-form-view.js';
 
 
@@ -50,11 +49,7 @@ export default class NewPointPresenter {
     this.#handlePointAdd(
       UserAction.ADD_POINT,
       UpdateType.MINOR,
-      {
-        ...point,
-        // WIP
-        id: getRandomNumber(0, Number.MAX_SAFE_INTEGER),
-      },
+      point,
     );
     this.destroy();
   };

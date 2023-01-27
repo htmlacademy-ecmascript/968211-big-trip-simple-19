@@ -1,24 +1,18 @@
-import mock from '../mock/mock.js';
-import { TYPES } from '../const.js';
+import { TYPES, UpdateType } from '../const.js';
 import Observable from '../framework/observable.js';
 
-const POINTS_AMOUNT = 8;
-
 export default class PageModel extends Observable {
+  #apiService;
+
   #types = TYPES;
+  #points = [];
+  #offersByType = {};
+  #destinations = [];
 
-  #points = mock.getPoints(POINTS_AMOUNT).map((point) => ({
-    id: point.id,
-    type: point.type,
-    destination: point.destination,
-    dateFrom: point.date_from ? new Date(point.date_from) : null,
-    dateTo: point.date_to ? new Date(point.date_to) : null,
-    basePrice: point.base_price,
-    offers: point.offers,
-  }));
-
-  #offersByType = Object.fromEntries(mock.getOffersByType().map(({ type, offers }) => [type, offers]));
-  #destinations = mock.getDestinations();
+  constructor({ apiService }) {
+    super();
+    this.#apiService = apiService;
+  }
 
 
   get types() {
@@ -29,10 +23,6 @@ export default class PageModel extends Observable {
     return structuredClone(this.#points);
   }
 
-  set points(points) {
-    this.#points = points;
-  }
-
   get offersByType() {
     return structuredClone(this.#offersByType);
   }
@@ -41,25 +31,67 @@ export default class PageModel extends Observable {
     return structuredClone(this.#destinations);
   }
 
-  updatePoint(updateType, updatedPoint) {
+  set points(points) {
+    this.#points = points;
+  }
+
+  async init() {
+    this._notify(UpdateType.BEFORE_INIT);
+    try {
+      [ this.#points, this.#offersByType, this.#destinations ] = await Promise.all([
+        this.#apiService.points,
+        this.#apiService.offersByType,
+        this.#apiService.destinations,
+      ]);
+      this._notify(UpdateType.INIT);
+    } catch(err) {
+      this.#points = [];
+      this.#offersByType = [];
+      this.#destinations = [];
+      this._notify(UpdateType.INIT_ERROR);
+    }
+  }
+
+  async updatePoint(updateType, updatedPoint) {
     const targetPoint = this.#points.find((point) => point.id === updatedPoint.id);
     if (!targetPoint) {
       throw new Error('Can\'t update unexisting point');
     }
-    Object.assign(targetPoint, updatedPoint);
-    this._notify(updateType, updatedPoint);
+
+    let updatedPointFromServer;
+    try {
+      updatedPointFromServer = await this.#apiService.updatePoint(updatedPoint);
+    } catch {
+      throw new Error('Can\'t update point');
+    }
+
+    Object.assign(targetPoint, updatedPointFromServer);
+    this._notify(updateType, updatedPointFromServer);
   }
 
-  addPoint(updateType, point) {
-    this.#points.push(point);
-    this._notify(updateType, point);
+  async addPoint(updateType, point) {
+    let addedPoint;
+    try {
+      addedPoint = await this.#apiService.addPoint(point);
+    } catch {
+      throw new Error('Can\'t add point');
+    }
+    this.#points = [addedPoint, ...this.#points];
+    this._notify(updateType, addedPoint);
   }
 
-  deletePoint(updateType, targetPoint) {
+  async deletePoint(updateType, targetPoint) {
     const index = this.#points.findIndex((point) => point.id === targetPoint.id);
     if (index === -1) {
       throw new Error('Can\'t delete unexisting point');
     }
+
+    try {
+      await this.#apiService.deletePoint(targetPoint);
+    } catch {
+      throw new Error('Can\'t delete point');
+    }
+
     this.#points.splice(index, 1);
     this._notify(updateType);
   }
