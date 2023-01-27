@@ -78,7 +78,7 @@ function getDestinationTemplate(id, destinations) {
 
 function createTemplate(isEditForm, point, types, offersByType, destinations) {
   const eventTypeListTemplate = getEventTypeListTemplate(point.type, types);
-  const { name: destinationName } = destinations.find((dest) => dest.id === point.destination);
+  const destinationName = destinations.find((dest) => dest.id === point.destination)?.name || '';
   const startTime = formatDateTime(point.dateFrom, DateFormat.POINT_FORM_TIME);
   const endTime = formatDateTime(point.dateTo, DateFormat.POINT_FORM_TIME);
   const offersTemplate = getOffersTemplate({
@@ -122,7 +122,7 @@ function createTemplate(isEditForm, point, types, offersByType, destinations) {
                     <span class="visually-hidden">Price</span>
                     €
                   </label>
-                  <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${he.encode(String(point.basePrice)) ?? ''}">
+                  <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${point.basePrice ?? ''}">
                 </div>
 
                 <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
@@ -213,7 +213,25 @@ export default class PointFormView extends AbstractStatefulView {
 
   #formSubmitHandler = (evt) => {
     evt.preventDefault();
-    this.#handleFormSubmit(this._state);
+
+    if (!this._state.destination) {
+      this.element.querySelector('#event-destination-1').focus();
+      return;
+    }
+    if (!(this._state.dateFrom instanceof Date)) {
+      this.element.querySelector('#event-start-time-1').focus();
+      return;
+    }
+    if (!(this._state.dateTo instanceof Date)) {
+      this.element.querySelector('#event-end-time-1').focus();
+      return;
+    }
+    if (!this._state.basePrice) {
+      this.element.querySelector('#event-price-1').focus();
+      return;
+    }
+
+    this.#handleFormSubmit(this.constructor.parseStateToPoint(this._state));
   };
 
   #changePointTypeClickHandler = (evt) => {
@@ -242,10 +260,16 @@ export default class PointFormView extends AbstractStatefulView {
 
   #basePriceChangeHandler = (evt) => {
     evt.preventDefault();
-    const basePrice = evt.target.value;
-    if (isNaN(basePrice)) {
+    let basePrice = Number(evt.target.value);
+
+    // если поле пустое, <= 0 или NaN - сохраняем в состояние null и очищаем поле
+    if (isNaN(basePrice) || basePrice <= 0) {
+      basePrice = null;
       evt.target.value = '';
-      return;
+    // если не целое число - округляем и сохраняем полученное значение в состояние и input
+    } else if(!Number.isInteger(basePrice)) {
+      basePrice = Math.round(basePrice);
+      evt.target.value = basePrice;
     }
 
     this._setState({ basePrice });
