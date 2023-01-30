@@ -1,4 +1,4 @@
-import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import AbstractView from '../framework/view/abstract-view.js';
 import { SortType } from '../const.js';
 
 function createTemplate(initialSortType) {
@@ -32,7 +32,7 @@ function createTemplate(initialSortType) {
           </form>`;
 }
 
-export default class SortView extends AbstractStatefulView {
+export default class SortView extends AbstractView {
   #initialSortType;
   #handleSortTypeChange;
 
