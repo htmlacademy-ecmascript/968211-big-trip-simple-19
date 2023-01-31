@@ -29,6 +29,36 @@ export default class PointPresenter {
     }
   }
 
+  setSaving() {
+    if (this.#component instanceof PointEditFormView) {
+      this.#component.updateElement({
+        isDisabled: true,
+        isSaving: true,
+      });
+    }
+  }
+
+  setDeleting() {
+    if (this.#component instanceof PointEditFormView) {
+      this.#component.updateElement({
+        isDisabled: true,
+        isDeleting: true,
+      });
+    }
+  }
+
+  setAborting() {
+    if (this.#component instanceof PointEditFormView) {
+      this.#component.shake(() => {
+        this.#component.updateElement({
+          isDisabled: false,
+          isSaving: false,
+          isDeleting: false,
+        });
+      });
+    }
+  }
+
   destroy() {
     this.#component.remove();
   }
@@ -96,13 +126,6 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (updatedPoint) => {
-    // Проверяем, поменялись ли в задаче данные, которые попадают под фильтрацию и сортировку,
-    // а значит требуют перерисовки списка - если таких нет, это PATCH-обновление
-    // изменения, инициирующие MINOR update:
-    // dateFrom (фильтрация и сортировка)
-    // dateTo (фильтрация)
-    // basePrice (сортировка)
-
     const isMinorUpdate = updatedPoint.dateFrom - this.#point.dateFrom !== 0
       || updatedPoint.dateTo - this.#point.dateTo !== 0
       || updatedPoint.basePrice !== this.#point.basePrice;
@@ -112,7 +135,6 @@ export default class PointPresenter {
       isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
       updatedPoint,
     );
-    this.#replaceFormToPoint();
   };
 
   #handleDeleteClick = (point) => {

@@ -1,6 +1,6 @@
 import { DateFormat } from '../const.js';
 import { formatDateTime } from '../utils/common.js';
-import AbstractStatefulView from '../framework/view/abstract-stateful-view.js';
+import AbstractView from '../framework/view/abstract-view.js';
 
 
 function createSelectedOffersTemplate({ selectedOfferIds, allOffers }) {
@@ -60,7 +60,7 @@ function createTemplate(point, offersByType, destinations) {
           </li>`;
 }
 
-export default class PointView extends AbstractStatefulView {
+export default class PointView extends AbstractView {
   #point;
   #offersByType;
   #destinations;
