@@ -1,5 +1,4 @@
 import { FilterType, UpdateType } from '../const.js';
-import { filter } from '../utils/filter.js';
 import FilterView from '../view/filter-view.js';
 
 export default class FilterPresenter {
@@ -15,17 +14,10 @@ export default class FilterPresenter {
   }
 
   get filters() {
-    const points = this.#model.points;
-    return [
-      {
-        type: FilterType.EVERYTHING,
-        enabled: true,
-      },
-      {
-        type: FilterType.FUTURE,
-        enabled: filter[FilterType.FUTURE](points).length > 0,
-      },
-    ];
+    return Object.values(FilterType).map((type) => ({
+      type,
+      enabled: this.#model.getFilteredPoints(type).length > 0,
+    }));
   }
 
   init() {

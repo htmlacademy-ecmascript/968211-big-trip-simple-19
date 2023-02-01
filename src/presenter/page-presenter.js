@@ -14,7 +14,6 @@ import {
 } from '../const.js';
 import PointPresenter from './point-presenter.js';
 import FilterPresenter from './filter-presenter.js';
-import { filter } from '../utils/filter.js';
 import NewPointPresenter from './new-point-presenter.js';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 
@@ -61,9 +60,7 @@ export default class PagePresenter {
   }
 
   get points() {
-    const filterType = this.#model.filterType;
-    const filteredPoints = filter[filterType](this.#model.points);
-    return this.constructor.getSortedPoints(this.#currentSortType, filteredPoints);
+    return this.constructor.getSortedPoints(this.#currentSortType, this.#model.points);
   }
 
   init() {
