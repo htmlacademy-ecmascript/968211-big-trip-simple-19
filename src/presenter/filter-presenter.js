@@ -4,17 +4,14 @@ import FilterView from '../view/filter-view.js';
 
 export default class FilterPresenter {
   #model;
-  #filterModel;
   #filterComponent;
   #container;
 
-  constructor({ model, filterModel, container }) {
+  constructor({ model, container }) {
     this.#model = model;
-    this.#filterModel = filterModel;
     this.#container = container;
 
     this.#model.addObserver(this.#handleModelEvent);
-    this.#filterModel.addObserver(this.#handleModelEvent);
   }
 
   get filters() {
@@ -36,7 +33,7 @@ export default class FilterPresenter {
 
     this.#filterComponent = new FilterView({
       filters: this.filters,
-      activeFilterType: this.#filterModel.filterType,
+      activeFilterType: this.#model.filterType,
       onFilterTypeChange: this.#handleFilterTypeChange,
     });
 
@@ -50,11 +47,11 @@ export default class FilterPresenter {
   }
 
   #handleFilterTypeChange = (filterType) => {
-    if (this.#filterModel.filterType === filterType) {
+    if (this.#model.filterType === filterType) {
       return;
     }
 
-    this.#filterModel.setFilterType(UpdateType.MAJOR, filterType);
+    this.#model.setFilterType(UpdateType.MAJOR, filterType);
   };
 
   #handleModelEvent = () => {

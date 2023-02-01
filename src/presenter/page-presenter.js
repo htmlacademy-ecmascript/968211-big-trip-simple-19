@@ -29,7 +29,6 @@ const listParentElement = document.querySelector('.trip-events');
 
 export default class PagePresenter {
   #model;
-  #filterModel;
   #filterPresenter;
   #newPointButtonComponent;
   #sortComponent;
@@ -44,9 +43,8 @@ export default class PagePresenter {
     upperLimit: TimeLimit.UPPER_LIMIT,
   });
 
-  constructor({ model, filterModel }) {
+  constructor({ model }) {
     this.#model = model;
-    this.#filterModel = filterModel;
 
     this.#newPointButtonComponent = new NewPointButtonView({
       onClick: this.#handleNewPointButtonClick,
@@ -60,11 +58,10 @@ export default class PagePresenter {
     });
 
     this.#model.addObserver(this.#handleModelEvent);
-    this.#filterModel.addObserver(this.#handleModelEvent);
   }
 
   get points() {
-    const filterType = this.#filterModel.filterType;
+    const filterType = this.#model.filterType;
     const filteredPoints = filter[filterType](this.#model.points);
     return this.constructor.getSortedPoints(this.#currentSortType, filteredPoints);
   }
@@ -78,8 +75,8 @@ export default class PagePresenter {
   createPoint() {
     // сброс фильтра и сортировки в начальное состояние
     // если текущий тип фильтра не дефолтный - изменение типа вызовет событие модели, по которому сбросится сортировка
-    if (this.#filterModel.filterType !== DEFAULT_FILTER_TYPE) {
-      this.#filterModel.setFilterType(UpdateType.MAJOR, DEFAULT_FILTER_TYPE);
+    if (this.#model.filterType !== DEFAULT_FILTER_TYPE) {
+      this.#model.setFilterType(UpdateType.MAJOR, DEFAULT_FILTER_TYPE);
       // если фильтр был дефолтный, а сортировка нет - сбрасываем напрямую
     } else if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
       this.#clearBoard({ resetSort: true });
@@ -97,7 +94,7 @@ export default class PagePresenter {
     const points = this.points;
 
     if (!points.length) {
-      this.#renderMessage(FilterTypeToEmptyMessage[this.#filterModel.filterType]);
+      this.#renderMessage(FilterTypeToEmptyMessage[this.#model.filterType]);
       return;
     }
 
@@ -119,7 +116,6 @@ export default class PagePresenter {
   #renderFilter() {
     this.#filterPresenter = new FilterPresenter({
       model: this.#model,
-      filterModel: this.#filterModel,
       container: headerElement,
     });
     this.#filterPresenter.init();

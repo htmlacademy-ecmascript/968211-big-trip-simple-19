@@ -14,7 +14,6 @@ export default class PageModel extends Observable {
     this.#apiService = apiService;
   }
 
-
   get types() {
     return structuredClone(this.#types);
   }
@@ -29,10 +28,6 @@ export default class PageModel extends Observable {
 
   get destinations() {
     return structuredClone(this.#destinations);
-  }
-
-  set points(points) {
-    this.#points = points;
   }
 
   async init() {

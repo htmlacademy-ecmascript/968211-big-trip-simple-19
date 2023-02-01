@@ -1,7 +1,7 @@
-import Observable from '../framework/observable.js';
 import { DEFAULT_FILTER_TYPE } from '../const.js';
+import PageModel from './page-model.js';
 
-export default class FilterModel extends Observable {
+export default class FilterModel extends PageModel {
   #filterType = DEFAULT_FILTER_TYPE;
 
   get filterType() {
