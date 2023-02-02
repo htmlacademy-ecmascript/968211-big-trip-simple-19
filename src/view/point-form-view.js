@@ -274,15 +274,9 @@ export default class PointFormView extends AbstractStatefulView {
 
   #destinationChangeHandler = (evt) => {
     evt.preventDefault();
-    const previousId = this._state.destination;
     const selectedId = this.#destinations
       .find((destination) => destination.name === evt.target.value)
-      ?.id;
-
-    if (selectedId === undefined || selectedId === previousId) {
-      evt.target.value = '';
-      return;
-    }
+      ?.id ?? null;
 
     this.updateElement({ destination: selectedId });
   };

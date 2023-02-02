@@ -1,4 +1,4 @@
-import { DEFAULT_FILTER_TYPE, FilterType } from '../const.js';
+import { DEFAULT_FILTER_TYPE, FilterType, ModelEvent } from '../const.js';
 import PageModel from './page-model.js';
 
 export default class FilterModel extends PageModel {
@@ -12,13 +12,13 @@ export default class FilterModel extends PageModel {
     return this.#filterType;
   }
 
-  setFilterType(updateType, filterType) {
+  setFilterType(filterType) {
     if (filterType === this.#filterType) {
       return;
     }
 
     this.#filterType = filterType;
-    this._notify(updateType, filterType);
+    this._notify(ModelEvent.FILTER_TYPE_SET, filterType);
   }
 
   getFilteredPoints(filterType) {

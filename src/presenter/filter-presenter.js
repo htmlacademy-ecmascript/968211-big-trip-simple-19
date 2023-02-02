@@ -1,4 +1,4 @@
-import { FilterType, UpdateType } from '../const.js';
+import { FilterType, ModelEvent } from '../const.js';
 import FilterView from '../view/filter-view.js';
 
 export default class FilterPresenter {
@@ -43,10 +43,19 @@ export default class FilterPresenter {
       return;
     }
 
-    this.#model.setFilterType(UpdateType.MAJOR, filterType);
+    this.#model.setFilterType(filterType);
   };
 
-  #handleModelEvent = () => {
-    this.init();
+  #handleModelEvent = (event) => {
+    const triggerEvents = [
+      ModelEvent.INIT,
+      ModelEvent.UPDATE_POINT,
+      ModelEvent.ADD_POINT,
+      ModelEvent.DELETE_POINT,
+    ];
+
+    if (triggerEvents.includes(event)) {
+      this.init();
+    }
   };
 }

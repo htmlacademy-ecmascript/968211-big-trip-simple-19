@@ -45,13 +45,14 @@ const UserAction = {
   DELETE_POINT: 'DELETE_POINT',
 };
 
-const UpdateType = {
-  PATCH: 'PATCH',
-  MINOR: 'MINOR',
-  MAJOR: 'MAJOR',
-  BEFORE_INIT: 'BEFORE_INIT',
-  INIT: 'INIT',
-  INIT_ERROR: 'INIT_ERROR',
+const ModelEvent = {
+  BEFORE_INIT: 'beforeInit',
+  INIT: 'init',
+  INIT_ERROR: 'initError',
+  UPDATE_POINT: 'updatePoint',
+  ADD_POINT: 'addPoint',
+  DELETE_POINT: 'deletePoint',
+  FILTER_TYPE_SET: 'filterTypeSet',
 };
 
 const INIT_ERROR_MESSAGE = 'Something went wrong.<br>Please, try again later.';
@@ -67,6 +68,6 @@ export {
   SortType,
   DEFAULT_SORT_TYPE,
   UserAction,
-  UpdateType,
+  ModelEvent,
   INIT_ERROR_MESSAGE,
 };
