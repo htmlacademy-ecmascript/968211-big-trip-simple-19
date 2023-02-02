@@ -1,5 +1,4 @@
 import PointView from '../view/point-view.js';
-import { UpdateType, UserAction } from '../const.js';
 import PointEditFormView from '../view/point-edit-form-view.js';
 
 export default class PointPresenter {
@@ -9,18 +8,30 @@ export default class PointPresenter {
   #component;
   #point;
   #handleEditFormCreation;
-  #handlePointChange;
+  #handlePointUpdate;
+  #handlePointDelete;
 
-  constructor({ model, container, onEditFormCreation, onPointChange }) {
+  constructor({ model, container, onEditFormCreation, onPointUpdate, onPointDelete }) {
     this.#model = model;
     this.#container = container;
     this.#handleEditFormCreation = onEditFormCreation;
-    this.#handlePointChange = onPointChange;
+    this.#handlePointUpdate = onPointUpdate;
+    this.#handlePointDelete = onPointDelete;
   }
 
   init(point) {
     this.#point = point;
-    this.#render();
+
+    const prevComponent = this.#component;
+    this.#component = this.#createPointComponent();
+
+    if (prevComponent) {
+      prevComponent.replaceWith(this.#component);
+      prevComponent.remove();
+      return;
+    }
+
+    this.#component.renderInto(this.#container);
   }
 
   resetView() {
@@ -61,25 +72,6 @@ export default class PointPresenter {
 
   destroy() {
     this.#component.remove();
-  }
-
-  #render() {
-    const prevComponent = this.#component;
-    // Создаем компонент формы только если предыдущий компонент - форма,
-    // во всех остальных случаях создаем компонент point
-    this.#component = prevComponent instanceof PointEditFormView
-      ? this.#createPointEditComponent() : this.#createPointComponent();
-
-    if (!prevComponent) {
-      this.#component.renderInto(this.#container);
-      return;
-    }
-
-    if (this.#container.contains(prevComponent.element)) {
-      prevComponent.replaceWith(this.#component);
-    }
-
-    prevComponent.remove();
   }
 
   #createPointComponent() {
@@ -126,22 +118,10 @@ export default class PointPresenter {
   };
 
   #handleFormSubmit = (updatedPoint) => {
-    const isMinorUpdate = updatedPoint.dateFrom - this.#point.dateFrom !== 0
-      || updatedPoint.dateTo - this.#point.dateTo !== 0
-      || updatedPoint.basePrice !== this.#point.basePrice;
-
-    this.#handlePointChange(
-      UserAction.UPDATE_POINT,
-      isMinorUpdate ? UpdateType.MINOR : UpdateType.PATCH,
-      updatedPoint,
-    );
+    this.#handlePointUpdate(updatedPoint);
   };
 
   #handleDeleteClick = (point) => {
-    this.#handlePointChange(
-      UserAction.DELETE_POINT,
-      UpdateType.MINOR,
-      point,
-    );
+    this.#handlePointDelete(point);
   };
 }

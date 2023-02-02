@@ -9,12 +9,11 @@ import {
   INIT_ERROR_MESSAGE,
   LOADING_MESSAGE,
   SortType,
-  UpdateType,
+  ModelEvent,
   UserAction,
 } from '../const.js';
 import PointPresenter from './point-presenter.js';
 import FilterPresenter from './filter-presenter.js';
-import { filter } from '../utils/filter.js';
 import NewPointPresenter from './new-point-presenter.js';
 import UiBlocker from '../framework/ui-blocker/ui-blocker.js';
 
@@ -29,7 +28,6 @@ const listParentElement = document.querySelector('.trip-events');
 
 export default class PagePresenter {
   #model;
-  #filterModel;
   #filterPresenter;
   #newPointButtonComponent;
   #sortComponent;
@@ -44,9 +42,8 @@ export default class PagePresenter {
     upperLimit: TimeLimit.UPPER_LIMIT,
   });
 
-  constructor({ model, filterModel }) {
+  constructor({ model }) {
     this.#model = model;
-    this.#filterModel = filterModel;
 
     this.#newPointButtonComponent = new NewPointButtonView({
       onClick: this.#handleNewPointButtonClick,
@@ -54,19 +51,16 @@ export default class PagePresenter {
 
     this.#newPointPresenter = new NewPointPresenter({
       model: this.#model,
-      containerComponent: this.#listComponent,
-      onPointAdd: this.#handleViewAction,
+      container: this.#listComponent.element,
+      onPointAdd: this.#handleViewAction.bind(this, UserAction.ADD_POINT),
       onDestroy: this.#onNewPointFormClose,
     });
 
     this.#model.addObserver(this.#handleModelEvent);
-    this.#filterModel.addObserver(this.#handleModelEvent);
   }
 
   get points() {
-    const filterType = this.#filterModel.filterType;
-    const filteredPoints = filter[filterType](this.#model.points);
-    return this.constructor.getSortedPoints(this.#currentSortType, filteredPoints);
+    return this.constructor.getSortedPoints(this.#currentSortType, this.#model.points);
   }
 
   init() {
@@ -78,8 +72,8 @@ export default class PagePresenter {
   createPoint() {
     // сброс фильтра и сортировки в начальное состояние
     // если текущий тип фильтра не дефолтный - изменение типа вызовет событие модели, по которому сбросится сортировка
-    if (this.#filterModel.filterType !== DEFAULT_FILTER_TYPE) {
-      this.#filterModel.setFilterType(UpdateType.MAJOR, DEFAULT_FILTER_TYPE);
+    if (this.#model.filterType !== DEFAULT_FILTER_TYPE) {
+      this.#model.setFilterType(DEFAULT_FILTER_TYPE);
       // если фильтр был дефолтный, а сортировка нет - сбрасываем напрямую
     } else if (this.#currentSortType !== DEFAULT_SORT_TYPE) {
       this.#clearBoard({ resetSort: true });
@@ -97,7 +91,7 @@ export default class PagePresenter {
     const points = this.points;
 
     if (!points.length) {
-      this.#renderMessage(FilterTypeToEmptyMessage[this.#filterModel.filterType]);
+      this.#renderMessage(FilterTypeToEmptyMessage[this.#model.filterType]);
       return;
     }
 
@@ -119,7 +113,6 @@ export default class PagePresenter {
   #renderFilter() {
     this.#filterPresenter = new FilterPresenter({
       model: this.#model,
-      filterModel: this.#filterModel,
       container: headerElement,
     });
     this.#filterPresenter.init();
@@ -143,7 +136,8 @@ export default class PagePresenter {
           this.#newPointPresenter.destroy();
           this.#resetPointPresentersView();
         },
-        onPointChange: this.#handleViewAction,
+        onPointUpdate: this.#handleViewAction.bind(this, UserAction.UPDATE_POINT),
+        onPointDelete: this.#handleViewAction.bind(this, UserAction.DELETE_POINT),
       });
       pointPresenter.init(point);
       this.#pointPresenter.set(point.id, pointPresenter);
@@ -182,54 +176,14 @@ export default class PagePresenter {
     this.#renderBoard();
   };
 
-  #handleModelEvent = (updateType, updatedPoint) => {
+  async #handleViewAction(actionType, point) {
     this.#uiBlocker.block();
 
-    switch (updateType) {
-      case UpdateType.PATCH:
-        // изменение точки в части данных, не влияющих на положение или наличие в списке
-        // обновляем измененную точку
-        this.#pointPresenter.get(updatedPoint.id).init(updatedPoint);
-        break;
-      case UpdateType.MINOR:
-        // триггер: удаление или добавление точки, изменение значения поля, которое влияет на сортировку или фильтр
-        // обновляем список
-        this.#clearBoard();
-        this.#renderBoard();
-        break;
-      case UpdateType.MAJOR:
-        // триггер: смена фильтра
-        // обновляем список, сбрасываем сортировку
-        this.#clearBoard({ resetSort: true });
-        this.#renderBoard();
-        break;
-      case UpdateType.BEFORE_INIT:
-        // перед загрузкой данных с сервера
-        this.#renderMessage(LOADING_MESSAGE);
-        break;
-      case UpdateType.INIT:
-        // триггер: загрузка данных с сервера успешно завершена
-        // удаляем сообщение о загрузке, включаем кнопку создания точки
-        this.#clearMessage();
-        this.#newPointButtonComponent.element.disabled = false;
-        this.#renderBoard();
-        break;
-      case UpdateType.INIT_ERROR:
-        // показ сообщения об ошибке
-        this.#clearMessage();
-        this.#renderMessage(INIT_ERROR_MESSAGE);
-        break;
-    }
-
-    this.#uiBlocker.unblock();
-  };
-
-  #handleViewAction = async (actionType, updateType, point) => {
     switch (actionType) {
       case UserAction.UPDATE_POINT:
         this.#pointPresenter.get(point.id).setSaving();
         try {
-          await this.#model.updatePoint(updateType, point);
+          await this.#model.updatePoint(point);
         } catch {
           this.#pointPresenter.get(point.id).setAborting();
         }
@@ -238,7 +192,7 @@ export default class PagePresenter {
       case UserAction.ADD_POINT:
         this.#newPointPresenter.setSaving();
         try {
-          await this.#model.addPoint(updateType, point);
+          await this.#model.addPoint(point);
         } catch {
           this.#newPointPresenter.setAborting();
         }
@@ -247,12 +201,71 @@ export default class PagePresenter {
       case UserAction.DELETE_POINT:
         this.#pointPresenter.get(point.id).setSaving();
         try {
-          await this.#model.deletePoint(updateType, point);
+          await this.#model.deletePoint(point);
         } catch {
           this.#pointPresenter.get(point.id).setAborting();
         }
         break;
     }
+
+    this.#uiBlocker.unblock();
+  }
+
+  #handleModelEvent = (event, payload) => {
+    const eventToAction = {
+      [ModelEvent.UPDATE_POINT]: ([pointBeforeUpdate, updatedPoint]) => {
+        const isOnlyOnePointToUpdate = updatedPoint.dateFrom - pointBeforeUpdate.dateFrom === 0
+          && updatedPoint.dateTo - pointBeforeUpdate.dateTo === 0
+          && updatedPoint.basePrice === pointBeforeUpdate.basePrice;
+
+        if (isOnlyOnePointToUpdate) {
+          // изменение точки в части данных, не влияющих на положение или наличие в списке
+          // обновляем измененную точку
+          this.#pointPresenter.get(updatedPoint.id).init(updatedPoint);
+        } else {
+          // триггер: удаление или добавление точки, изменение значения поля, которое влияет на сортировку или фильтр
+          this.#clearBoard();
+          this.#renderBoard();
+        }
+      },
+
+      [ModelEvent.ADD_POINT]: () => {
+        this.#clearBoard();
+        this.#renderBoard();
+      },
+
+      [ModelEvent.DELETE_POINT]: () => {
+        this.#clearBoard();
+        this.#renderBoard();
+      },
+
+      [ModelEvent.FILTER_TYPE_SET]: () => {
+        // обновляем список, сбрасываем сортировку
+        this.#clearBoard({ resetSort: true });
+        this.#renderBoard();
+      },
+
+      [ModelEvent.BEFORE_INIT]: () => {
+        // перед загрузкой данных с сервера
+        this.#renderMessage(LOADING_MESSAGE);
+      },
+
+      [ModelEvent.INIT]: () => {
+        // загрузка данных с сервера успешно завершена
+        // удаляем сообщение о загрузке, включаем кнопку создания точки
+        this.#clearMessage();
+        this.#newPointButtonComponent.element.disabled = false;
+        this.#renderBoard();
+      },
+
+      [ModelEvent.INIT_ERROR]: () => {
+        // показ сообщения об ошибке
+        this.#clearMessage();
+        this.#renderMessage(INIT_ERROR_MESSAGE);
+      },
+    };
+
+    eventToAction[event]?.(payload);
   };
 
   #handleNewPointButtonClick = () => {

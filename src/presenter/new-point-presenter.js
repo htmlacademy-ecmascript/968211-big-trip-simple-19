@@ -1,17 +1,16 @@
-import { UpdateType, UserAction } from '../const.js';
 import PointAddFormView from '../view/point-add-form-view.js';
 
 
 export default class NewPointPresenter {
   #model;
-  #containerComponent;
+  #container;
   #handlePointAdd;
   #handleDestroy;
   #component;
 
-  constructor({ model, containerComponent, onPointAdd, onDestroy }) {
+  constructor({ model, container, onPointAdd, onDestroy }) {
     this.#model = model;
-    this.#containerComponent = containerComponent;
+    this.#container = container;
     this.#handlePointAdd = onPointAdd;
     this.#handleDestroy = onDestroy;
   }
@@ -29,7 +28,7 @@ export default class NewPointPresenter {
       onCancelClick: this.#handleCancelClick,
     });
 
-    this.#component.renderFirstInto(this.#containerComponent.element);
+    this.#component.renderFirstInto(this.#container);
 
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
@@ -63,11 +62,7 @@ export default class NewPointPresenter {
   }
 
   #handleFormSubmit = (point) => {
-    this.#handlePointAdd(
-      UserAction.ADD_POINT,
-      UpdateType.MINOR,
-      point,
-    );
+    this.#handlePointAdd(point);
   };
 
   #handleCancelClick = () => {

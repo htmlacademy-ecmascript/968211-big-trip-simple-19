@@ -1,4 +1,4 @@
-import { TYPES, UpdateType } from '../const.js';
+import { TYPES, ModelEvent } from '../const.js';
 import Observable from '../framework/observable.js';
 
 export default class PageModel extends Observable {
@@ -13,7 +13,6 @@ export default class PageModel extends Observable {
     super();
     this.#apiService = apiService;
   }
-
 
   get types() {
     return structuredClone(this.#types);
@@ -31,28 +30,24 @@ export default class PageModel extends Observable {
     return structuredClone(this.#destinations);
   }
 
-  set points(points) {
-    this.#points = points;
-  }
-
   async init() {
-    this._notify(UpdateType.BEFORE_INIT);
+    this._notify(ModelEvent.BEFORE_INIT);
     try {
       [ this.#points, this.#offersByType, this.#destinations ] = await Promise.all([
         this.#apiService.points,
         this.#apiService.offersByType,
         this.#apiService.destinations,
       ]);
-      this._notify(UpdateType.INIT);
+      this._notify(ModelEvent.INIT);
     } catch(err) {
       this.#points = [];
       this.#offersByType = [];
       this.#destinations = [];
-      this._notify(UpdateType.INIT_ERROR);
+      this._notify(ModelEvent.INIT_ERROR);
     }
   }
 
-  async updatePoint(updateType, updatedPoint) {
+  async updatePoint(updatedPoint) {
     const targetPoint = this.#points.find((point) => point.id === updatedPoint.id);
     if (!targetPoint) {
       throw new Error('Can\'t update unexisting point');
@@ -65,22 +60,24 @@ export default class PageModel extends Observable {
       throw new Error('Can\'t update point');
     }
 
+    const pointBeforeUpdate = structuredClone(targetPoint);
     Object.assign(targetPoint, updatedPointFromServer);
-    this._notify(updateType, updatedPointFromServer);
+    // передаем точку до и после обновления
+    this._notify(ModelEvent.UPDATE_POINT, [pointBeforeUpdate, targetPoint]);
   }
 
-  async addPoint(updateType, point) {
+  async addPoint(point) {
     let addedPoint;
     try {
       addedPoint = await this.#apiService.addPoint(point);
-    } catch {
+    } catch(err) {
       throw new Error('Can\'t add point');
     }
     this.#points = [addedPoint, ...this.#points];
-    this._notify(updateType, addedPoint);
+    this._notify(ModelEvent.ADD_POINT, addedPoint);
   }
 
-  async deletePoint(updateType, targetPoint) {
+  async deletePoint(targetPoint) {
     const index = this.#points.findIndex((point) => point.id === targetPoint.id);
     if (index === -1) {
       throw new Error('Can\'t delete unexisting point');
@@ -93,6 +90,6 @@ export default class PageModel extends Observable {
     }
 
     this.#points.splice(index, 1);
-    this._notify(updateType);
+    this._notify(ModelEvent.DELETE_POINT);
   }
 }

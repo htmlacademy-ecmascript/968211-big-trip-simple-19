@@ -1,34 +1,23 @@
-import { FilterType, UpdateType } from '../const.js';
-import { filter } from '../utils/filter.js';
+import { FilterType, ModelEvent } from '../const.js';
 import FilterView from '../view/filter-view.js';
 
 export default class FilterPresenter {
   #model;
-  #filterModel;
   #filterComponent;
   #container;
 
-  constructor({ model, filterModel, container }) {
+  constructor({ model, container }) {
     this.#model = model;
-    this.#filterModel = filterModel;
     this.#container = container;
 
     this.#model.addObserver(this.#handleModelEvent);
-    this.#filterModel.addObserver(this.#handleModelEvent);
   }
 
   get filters() {
-    const points = this.#model.points;
-    return [
-      {
-        type: FilterType.EVERYTHING,
-        enabled: true,
-      },
-      {
-        type: FilterType.FUTURE,
-        enabled: filter[FilterType.FUTURE](points).length > 0,
-      },
-    ];
+    return Object.values(FilterType).map((type) => ({
+      type,
+      enabled: this.#model.getFilteredPoints(type).length > 0,
+    }));
   }
 
   init() {
@@ -36,7 +25,7 @@ export default class FilterPresenter {
 
     this.#filterComponent = new FilterView({
       filters: this.filters,
-      activeFilterType: this.#filterModel.filterType,
+      activeFilterType: this.#model.filterType,
       onFilterTypeChange: this.#handleFilterTypeChange,
     });
 
@@ -50,14 +39,23 @@ export default class FilterPresenter {
   }
 
   #handleFilterTypeChange = (filterType) => {
-    if (this.#filterModel.filterType === filterType) {
+    if (this.#model.filterType === filterType) {
       return;
     }
 
-    this.#filterModel.setFilterType(UpdateType.MAJOR, filterType);
+    this.#model.setFilterType(filterType);
   };
 
-  #handleModelEvent = () => {
-    this.init();
+  #handleModelEvent = (event) => {
+    const triggerEvents = [
+      ModelEvent.INIT,
+      ModelEvent.UPDATE_POINT,
+      ModelEvent.ADD_POINT,
+      ModelEvent.DELETE_POINT,
+    ];
+
+    if (triggerEvents.includes(event)) {
+      this.init();
+    }
   };
 }
