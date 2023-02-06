@@ -51,7 +51,7 @@ export default class PagePresenter {
 
     this.#newPointPresenter = new NewPointPresenter({
       model: this.#model,
-      container: this.#listComponent.element,
+      container: this.#listComponent,
       onPointAdd: this.#handleViewAction.bind(this, UserAction.ADD_POINT),
       onDestroy: this.#onNewPointFormClose,
     });

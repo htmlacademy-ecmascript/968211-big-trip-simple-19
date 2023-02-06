@@ -28,7 +28,7 @@ export default class NewPointPresenter {
       onCancelClick: this.#handleCancelClick,
     });
 
-    this.#component.renderFirstInto(this.#container);
+    this.#component.renderFirstInto(this.#container.element);
 
     document.addEventListener('keydown', this.#escKeyDownHandler);
   }
